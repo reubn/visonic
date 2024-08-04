@@ -18,6 +18,7 @@ import re
 from enum import Enum
 from pyvisonic import VisonicProtocol
 import socket
+from inspect import currentframe, getframeinfo, stack
 
 # Try to import aconsole, if it fails then print an error message
 try:
@@ -863,7 +864,7 @@ async def controller(client : VisonicClient, console : MyAsyncConsole):
                         for device in devices:
                             console.print("Device " + str(device))
                     else:
-                        console.print("ERROR: There must be a panel connection to perform command " + result)
+                        console.print("ERROR: invalid command " + result)
         
         print("Here ZZZZZZZ")
         
@@ -890,11 +891,36 @@ async def controller(client : VisonicClient, console : MyAsyncConsole):
         raise e   
 
 def handle_exception(loop, context):
+
+    def _createPrefix() -> str:
+        previous_frame = currentframe().f_back
+        (
+            filepath,
+            line_number,
+            function,
+            lines,
+            index,
+        ) = inspect.getframeinfo(previous_frame)
+        filename = filepath[filepath.rfind('/')+1:]
+        s = f"{filename} {line_number:<5} {function:<30} "
+        previous_frame = currentframe()
+        (
+            filepath,
+            line_number,
+            function,
+            lines,
+            index,
+        ) = inspect.getframeinfo(previous_frame)
+        filename = filepath[filepath.rfind('/')+1:]
+        
+        return s + f"{filename} {line_number:<5} {function:<30} "
+
     # context["message"] will always be there; but context["exception"] may not
     msg = context.get("exception", context["message"])
     if str(msg) != terminating_clean:
         print(f"Caught exception: {msg}")
         print(f"                  {context}")
+        #print(f"                  {_createPrefix()}")
     asyncio.create_task(shutdown(loop))
 
 async def shutdown(loop, signal=None):
@@ -906,17 +932,18 @@ async def shutdown(loop, signal=None):
     await asyncio.gather(*tasks, return_exceptions=True)
     loop.stop()
 
-   
-
 if __name__ == '__main__':
+    # Set up the asyncio first and then we don't get the debug data messages
+    testloop = asyncio.new_event_loop()
+    asyncio.set_event_loop(testloop)
+    testloop.set_exception_handler(handle_exception)
+
     setupLocalLogger("ERROR", empty = True)   # one of "WARNING"  "INFO"  "ERROR"   "DEBUG"
     ConfigureLogger(str(args.print).lower(), None)
     setConnectionMode(str(args.connect).lower())
 
-    testloop = asyncio.get_event_loop()
-    testloop.set_exception_handler(handle_exception)
-
     client = VisonicClient(loop = testloop, config = myconfig)
+
     if client is not None:
         success = True #client.connect(wait_sleep=False, wait_loop=True)
         if success:

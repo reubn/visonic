@@ -94,6 +94,11 @@ pmPanelTroubleType_t = {
    0x3B : AlTroubleType.BATTERY,       0x3C : AlTroubleType.BATTERY,   0x40 : AlTroubleType.BATTERY,       0x43 : AlTroubleType.BATTERY
 }
 
+# Convert byte array to a string of hex values
+def toString(array_alpha: bytearray, gap = " "):
+    
+    return ("".join(("%02x"+gap) % b for b in array_alpha))[:-len(gap)] if len(gap) > 0 else ("".join("%02x" % b for b in array_alpha))
+
 class vloggerclass:
     def __init__(self, loggy, panel_id : int = -1, detail : bool = False):
         self.detail = detail
@@ -654,11 +659,11 @@ class MyChecksumCalc:
             return True
 
         if packet[-2:-1][0] == self._calculateCRC(packet[1:-2])[0] + 1:
-            log.debug("[_validatePDU] Validated a Packet with a checksum that is 1 more than the actual checksum!!!! {0} and {1} alt calc is {2}".format(self._toString(packet), hex(self._calculateCRC(packet[1:-2])[0]).upper(), hex(self._calculateCRCAlt(packet[1:-2])[0]).upper()))
+            log.debug("[_validatePDU] Validated a Packet with a checksum that is 1 more than the actual checksum!!!! {0} and {1} alt calc is {2}".format(toString(packet), hex(self._calculateCRC(packet[1:-2])[0]).upper(), hex(self._calculateCRCAlt(packet[1:-2])[0]).upper()))
             return True
 
         if packet[-2:-1][0] == self._calculateCRC(packet[1:-2])[0] - 1:
-            log.debug("[_validatePDU] Validated a Packet with a checksum that is 1 less than the actual checksum!!!! {0} and {1} alt calc is {2}".format(self._toString(packet), hex(self._calculateCRC(packet[1:-2])[0]).upper(), hex(self._calculateCRCAlt(packet[1:-2])[0]).upper()))
+            log.debug("[_validatePDU] Validated a Packet with a checksum that is 1 less than the actual checksum!!!! {0} and {1} alt calc is {2}".format(toString(packet), hex(self._calculateCRC(packet[1:-2])[0]).upper(), hex(self._calculateCRCAlt(packet[1:-2])[0]).upper()))
             return True
 
         log.debug("[_validatePDU] Not valid packet, CRC failed, may be ongoing and not final 0A")
@@ -667,7 +672,7 @@ class MyChecksumCalc:
     # alternative to calculate the checksum for sending and receiving messages
     def _calculateCRCAlt(self, msg: bytearray):
         """ Calculate CRC Checksum """
-        # log.debug("[_calculateCRC] Calculating for: %s", self._toString(msg))
+        # log.debug("[_calculateCRC] Calculating for: %s", toString(msg))
         # Calculate the checksum
         checksum = 0
         for char in msg[0 : len(msg)]:
@@ -678,13 +683,13 @@ class MyChecksumCalc:
         checksum = 256 - (checksum % 255)
         if checksum == 256:
             checksum = 1
-        # log.debug("[_calculateCRC] Calculating for: {self._toString(msg)}     calculated CRC is: {self._toString(bytearray([checksum]))}")
+        # log.debug("[_calculateCRC] Calculating for: {toString(msg)}     calculated CRC is: {toString(bytearray([checksum]))}")
         return bytearray([checksum])
 
     # calculate the checksum for sending and receiving messages
     def _calculateCRC(self, msg: bytearray):
         """ Calculate CRC Checksum """
-        # log.debug("[_calculateCRC] Calculating for: %s", self._toString(msg))
+        # log.debug("[_calculateCRC] Calculating for: %s", toString(msg))
         # Calculate the checksum
         checksum = 0
         for char in msg[0 : len(msg)]:
@@ -692,7 +697,7 @@ class MyChecksumCalc:
         checksum = 0xFF - (checksum % 0xFF)
         if checksum == 0xFF:
             checksum = 0x00
-        # log.debug("[_calculateCRC] Calculating for: {self._toString(msg)}     calculated CRC is: {self._toString(bytearray([checksum]))}")
+        # log.debug("[_calculateCRC] Calculating for: {toString(msg)}     calculated CRC is: {toString(bytearray([checksum]))}")
         return bytearray([checksum])
 
 
@@ -837,10 +842,6 @@ class AlPanelInterfaceHelper(AlPanelInterface):
     def getEventLog(self, code : str = "") -> AlCommandStatus:
         """ Get Panel Event Log """
         return AlCommandStatus.FAIL_ABSTRACT_CLASS_NOT_IMPLEMENTED
-
-    # Convert byte array to a string of hex values
-    def _toString(self, array_alpha: bytearray):
-        return ("".join("%02x " % b for b in array_alpha))[:-1]
 
     # get the current date and time
     def _getTimeFunction(self) -> datetime:
