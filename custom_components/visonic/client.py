@@ -8,6 +8,8 @@ from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from functools import partial
 import threading
+import collections
+from collections import namedtuple
 
 from enum import IntEnum
 from requests import ConnectTimeout, HTTPError
@@ -57,9 +59,6 @@ from .const import (
     ALARM_COMMAND_EVENT,
     ALARM_PANEL_LOG_FILE_COMPLETE,
     ALARM_PANEL_LOG_FILE_ENTRY,
-#    ALARM_PANEL_COMMAND,
-#    ALARM_PANEL_EVENTLOG,
-#    ALARM_PANEL_RECONNECT,
     ATTR_BYPASS,
     VISONIC_UNIQUE_NAME,
     CONF_EXCLUDE_SENSOR,
@@ -73,12 +72,10 @@ from .const import (
     CONF_ARM_NIGHT_ENABLED,
     CONF_INSTANT_ARM_AWAY,
     CONF_INSTANT_ARM_HOME,
-#    CONF_AUTO_SYNC_TIME,
     CONF_EEPROM_ATTRIBUTES,
     CONF_DEVICE_BAUD,
     CONF_DEVICE_TYPE,
     CONF_DOWNLOAD_CODE,
-#    CONF_FORCE_AUTOENROLL,
     CONF_EMULATION_MODE,
     CONF_LANGUAGE,
     CONF_MOTION_OFF_DELAY,
@@ -128,14 +125,6 @@ MAX_CLIENT_LOG_ENTRIES = 300
 
 _LOGGER = logging.getLogger(__name__)
 
-class PanelCondition(IntEnum): # Start at 100 to make them unique for AlarmPanelEventActionList mixing with AlCondition
-    CHECK_ARM_DISARM_COMMAND = 100
-    CHECK_BYPASS_COMMAND = 101
-    CHECK_EVENT_LOG_COMMAND = 102
-    CHECK_X10_COMMAND = 103
-    CONNECTION = 104
-    PANEL_LOG = 105
-
 messageDict = {
     AlCommandStatus.SUCCESS                     : "Success, sent Command to Panel",
     AlCommandStatus.FAIL_DOWNLOAD_IN_PROGRESS   : "Failed to Send Command To Panel, not supported when downloading EPROM",
@@ -146,29 +135,32 @@ messageDict = {
     AlCommandStatus.FAIL_PANEL_CONFIG_PREVENTED : "Failed to Send Command To Panel, disabled by panel settings"
 }
 
-ValidEvents = [
-    ALARM_SENSOR_CHANGE_EVENT,
-    ALARM_PANEL_CHANGE_EVENT,
-    ALARM_PANEL_LOG_FILE_ENTRY,
-    ALARM_PANEL_LOG_FILE_COMPLETE,
-    ALARM_COMMAND_EVENT
-]
-  
+class PanelCondition(IntEnum): # Start at 100 to make them unique for AlarmPanelEventActionList mixing with AlCondition
+    CHECK_ARM_DISARM_COMMAND = 100
+    CHECK_BYPASS_COMMAND = 101
+    CHECK_EVENT_LOG_COMMAND = 102
+    CHECK_X10_COMMAND = 103
+    CONNECTION = 104
+    PANEL_LOG_COMPLETE = 105
+    PANEL_LOG_ENTRY = 106
+
+HA_Event_Type = collections.namedtuple('HA_Event_Type', 'name action')  # If action is an empty string then it is not added
 AlarmPanelEventActionList = {
-   AlCondition.ZONE_UPDATE                 : "",
-   AlCondition.PANEL_UPDATE                : "panelupdate", 
-   AlCondition.PANEL_RESET                 : "panelreset",
-   AlCondition.PIN_REJECTED                : "pinrejected",
-   AlCondition.DOWNLOAD_TIMEOUT            : "timeoutdownload", 
-   AlCondition.WATCHDOG_TIMEOUT_GIVINGUP   : "timeoutwaiting", 
-   AlCondition.WATCHDOG_TIMEOUT_RETRYING   : "timeoutactive", 
-   AlCondition.NO_DATA_FROM_PANEL          : "nopaneldata", 
-   PanelCondition.CONNECTION               : "connection",
-   PanelCondition.PANEL_LOG                : "",
-   PanelCondition.CHECK_ARM_DISARM_COMMAND : "armdisarm", 
-   PanelCondition.CHECK_BYPASS_COMMAND     : "bypass", 
-   PanelCondition.CHECK_EVENT_LOG_COMMAND  : "eventlog", 
-   PanelCondition.CHECK_X10_COMMAND        : "x10"
+   AlCondition.ZONE_UPDATE                 : HA_Event_Type(ALARM_SENSOR_CHANGE_EVENT,     ""),
+   AlCondition.PANEL_UPDATE                : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "panelupdate"), 
+   AlCondition.PANEL_RESET                 : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "panelreset"),
+   AlCondition.PIN_REJECTED                : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "pinrejected"),
+   AlCondition.DOWNLOAD_TIMEOUT            : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "timeoutdownload"), 
+   AlCondition.WATCHDOG_TIMEOUT_GIVINGUP   : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "timeoutwaiting"), 
+   AlCondition.WATCHDOG_TIMEOUT_RETRYING   : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "timeoutactive"), 
+   AlCondition.NO_DATA_FROM_PANEL          : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "nopaneldata"), 
+   PanelCondition.CONNECTION               : HA_Event_Type(ALARM_PANEL_CHANGE_EVENT,      "connection"),
+   PanelCondition.PANEL_LOG_COMPLETE       : HA_Event_Type(ALARM_PANEL_LOG_FILE_COMPLETE, ""),
+   PanelCondition.PANEL_LOG_ENTRY          : HA_Event_Type(ALARM_PANEL_LOG_FILE_ENTRY,    ""),
+   PanelCondition.CHECK_ARM_DISARM_COMMAND : HA_Event_Type(ALARM_COMMAND_EVENT,           "armdisarm"), 
+   PanelCondition.CHECK_BYPASS_COMMAND     : HA_Event_Type(ALARM_COMMAND_EVENT,           "bypass"), 
+   PanelCondition.CHECK_EVENT_LOG_COMMAND  : HA_Event_Type(ALARM_COMMAND_EVENT,           "eventlog"), 
+   PanelCondition.CHECK_X10_COMMAND        : HA_Event_Type(ALARM_COMMAND_EVENT,           "x10")
 }
 
 class MyTransport(AlTransport):
@@ -584,8 +576,7 @@ class VisonicClient:
             and entry.current <= total
         ):  
             self._fireHAEvent(
-                name = ALARM_PANEL_LOG_FILE_ENTRY, 
-                event_id = PanelCondition.PANEL_LOG, 
+                event_id = PanelCondition.PANEL_LOG_ENTRY, 
                 datadictionary = {"current": current,
                                   "total": total,
                                   "date": entry.date,
@@ -639,7 +630,7 @@ class VisonicClient:
 
                 if self.toBool(self.config.get(CONF_LOG_DONE)):
                     self.logstate_debug("Panel Event Log - Firing Completion Event")
-                    self._fireHAEvent(name = ALARM_PANEL_LOG_FILE_COMPLETE, event_id = PanelCondition.PANEL_LOG, datadictionary = {"total": total, "available": entry.total})
+                    self._fireHAEvent(event_id = PanelCondition.PANEL_LOG_COMPLETE, datadictionary = {"total": total, "available": entry.total})
                 self.logstate_debug("Panel Event Log - Complete")
 
     # This is not called from anywhere, use it for debug purposes and/or to clear all entities from HA
@@ -764,7 +755,7 @@ class VisonicClient:
     def onChange(self, fn : Callable):
         self.onChangeHandler.append(fn)
 
-    def _fireHAEvent(self, name: str, event_id: AlCondition | PanelCondition, datadictionary: dict):
+    def _fireHAEvent(self, event_id: AlCondition | PanelCondition, datadictionary: dict):
         # Check to ensure variables are set correctly
         if self.hass is None:
             self.logstate_warning("Attempt to generate HA event when hass is undefined")
@@ -777,22 +768,18 @@ class VisonicClient:
             self.logstate_warning("Attempt to generate HA event when Event Type is undefined")
             return
 
-        if name not in ValidEvents:
-            self.logstate_warning(f"Attempt to generate HA event but it is Invalid {name}")
-            return
-
         # Call all the registered client change handlers
         for cb in self.onChangeHandler:
             cb()
 
         if event_id in AlarmPanelEventActionList: # Event must be in the list to send out
+            name = AlarmPanelEventActionList[event_id].name
             a = {}
             a[PANEL_ATTRIBUTE_NAME] = self.getPanelID()
             a["panel_id"] = Platform.ALARM_CONTROL_PANEL + "." + slugify(self.getAlarmPanelUniqueIdent())
 
-            if name == ALARM_PANEL_CHANGE_EVENT or name == ALARM_COMMAND_EVENT:
-                e = AlarmPanelEventActionList[event_id]
-                a["action"] = str(e)
+            if len(AlarmPanelEventActionList[event_id].action) > 0:       # name == ALARM_PANEL_CHANGE_EVENT or name == ALARM_COMMAND_EVENT:
+                a["action"] = AlarmPanelEventActionList[event_id].action
 
             if datadictionary is not None:
                 b = datadictionary.copy()
@@ -824,7 +811,7 @@ class VisonicClient:
                     datadict["entity_id"] = s.entity_id
                     break
             
-            self._fireHAEvent(ALARM_SENSOR_CHANGE_EVENT, AlCondition.ZONE_UPDATE, datadict)
+            self._fireHAEvent(AlCondition.ZONE_UPDATE, datadict)
 
         # Check to make sure we have an image entity created for this sensor
         if not self.DisableAllCommands and sensor.getDeviceID() not in self.image_list and sensor.getSensorType() == AlSensorType.CAMERA:
@@ -835,10 +822,10 @@ class VisonicClient:
         pass
 
     # This can be called from this module but it is also the callback handler for the connection
-    def onPanelChangeHandler(self, event_id: AlCondition | PanelCondition, data : dict, event_name = ALARM_PANEL_CHANGE_EVENT):
+    def onPanelChangeHandler(self, event_id: AlCondition | PanelCondition, data : dict):
         """Generate HA Bus Event and Send Notification to Frontend."""
         
-        self._fireHAEvent(name = event_name, event_id = event_id, datadictionary = data if data is not None else {} )
+        self._fireHAEvent(event_id = event_id, datadictionary = data if data is not None else {} )
 
         if event_id == AlCondition.DOWNLOAD_SUCCESS:        # download success        
             # Update the friendly name of the control flow
@@ -952,7 +939,7 @@ class VisonicClient:
 
         # General update trigger
         #    0 is a disconnect, state="disconnected" means initial disconnection and (hopefully) reconnect from an exception (probably comms related)
-        self._fireHAEvent(name = ALARM_PANEL_CHANGE_EVENT, event_id = PanelCondition.CONNECTION, datadictionary = {"state": "disconnected", "reason": reason})
+        self._fireHAEvent(event_id = PanelCondition.CONNECTION, datadictionary = {"state": "disconnected", "reason": reason})
 
         self.panel_exception_counter = self.panel_exception_counter + 1
         asyncio.ensure_future(self.disconnect_callback_async(), loop=self.hass.loop)
@@ -1041,7 +1028,7 @@ class VisonicClient:
         datadict["reason_str"] = reason.name.title()
         datadict["message"] = message + " " + messageDict[reason]
 
-        self.onPanelChangeHandler(event_id = event_id, event_name = ALARM_COMMAND_EVENT, data = datadict)
+        self.onPanelChangeHandler(event_id = event_id, data = datadict)
 
         #self.logstate_debug("[" + message + "] " + messageDict[reason])
 
@@ -1556,9 +1543,9 @@ class VisonicClient:
             self.logstate_debug("........... connection attempt {0} of {1}".format(attemptCounter + 1, self.totalAttempts))
             if await self.connect_to_alarm():
                 self.logstate_debug("........... connection made")
-                self._fireHAEvent(name = ALARM_PANEL_CHANGE_EVENT, event_id = PanelCondition.CONNECTION, datadictionary = {"state": "connected", "attempt": attemptCounter + 1})
+                self._fireHAEvent(event_id = PanelCondition.CONNECTION, datadictionary = {"state": "connected", "attempt": attemptCounter + 1})
                 return
-            self._fireHAEvent(name = ALARM_PANEL_CHANGE_EVENT, event_id = PanelCondition.CONNECTION, datadictionary = {"state": "failedattempt", "attempt": attemptCounter + 1})
+            self._fireHAEvent(event_id = PanelCondition.CONNECTION, datadictionary = {"state": "failedattempt", "attempt": attemptCounter + 1})
             attemptCounter = attemptCounter + 1
             force = False
             if attemptCounter < self.totalAttempts:

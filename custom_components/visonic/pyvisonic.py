@@ -207,20 +207,20 @@ pmPanelType_t = {
 #     This data defines each panel type's maximum capability
 pmPanelConfig_t = {    #      0       1       2       3       4       5       6       7       8       9      10      11      12      13      14      15      16      See pmPanelType_t above
    "CFG_SUPPORTED"     : (  False,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True ), # Supported Panels i.e. not a PowerMax
-   "CFG_KEEPALIVE"     : (  10000,     25,     25,     25,     25,     25,     25,     25,     25,     25,     25,     25,     25,     15,     25,     25,     15 ), # Keep Alive message interval if no other messages sent
-   "CFG_DLCODE_1"      : ( "5650", "5650", "5650", "5650", "5650", "5650", "5650", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA" ), # Default download codes (for reset panels or panels that have not been changed)
-   "CFG_DLCODE_2"      : ( "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB" ), # Alternative (Master) known default download codes
-   "CFG_PARTITIONS"    : (      1,      1,      1,      1,      3,      3,      1,      3,      3,      3,      3,      3,      3,      3,      3,      3,      3 ),
-   "CFG_EVENTS"        : (    250,    250,    250,    250,    250,    250,    250,    250,   1000,   1000,   1000,   1000,   1000,   1000,   1000,   1000,   1000 ),
-   "CFG_KEYFOBS"       : (      8,      8,      8,      8,      8,      8,      8,      8,     32,     32,     32,     32,     32,     32,     32,     32,     32 ),
-   "CFG_1WKEYPADS"     : (      8,      8,      8,      8,      8,      8,      8,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0 ),
-   "CFG_2WKEYPADS"     : (      2,      2,      2,      2,      2,      2,      2,      8,     32,     32,     32,     32,     32,     32,     32,     32,     32 ),
-   "CFG_SIRENS"        : (      2,      2,      2,      2,      2,      2,      2,      4,      8,      8,      8,      8,      8,      8,      8,      8,      8 ),
-   "CFG_USERCODES"     : (      8,      8,      8,      8,      8,      8,      8,     48,     48,     48,     48,     48,     48,     48,     48,     48,     48 ),
+   "CFG_KEEPALIVE"     : (      0,     25,     25,     25,     25,     25,     25,     25,     25,     25,     25,     25,     25,     15,     25,     25,     15 ), # Keep Alive message interval if no other messages sent
+   "CFG_DLCODE_1"      : (     "", "5650", "5650", "5650", "5650", "5650", "5650", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA" ), # Default download codes (for reset panels or panels that have not been changed)
+   "CFG_DLCODE_2"      : (     "", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "AAAA", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB", "BBBB" ), # Alternative (Master) known default download codes
+   "CFG_PARTITIONS"    : (      0,      1,      1,      1,      3,      3,      1,      3,      3,      3,      3,      3,      3,      3,      3,      3,      3 ),
+   "CFG_EVENTS"        : (      0,    250,    250,    250,    250,    250,    250,    250,   1000,   1000,   1000,   1000,   1000,   1000,   1000,   1000,   1000 ),
+   "CFG_KEYFOBS"       : (      0,      8,      8,      8,      8,      8,      8,      8,     32,     32,     32,     32,     32,     32,     32,     32,     32 ),
+   "CFG_1WKEYPADS"     : (      0,      8,      8,      8,      8,      8,      8,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0 ),
+   "CFG_2WKEYPADS"     : (      0,      2,      2,      2,      2,      2,      2,      8,     32,     32,     32,     32,     32,     32,     32,     32,     32 ),
+   "CFG_SIRENS"        : (      0,      2,      2,      2,      2,      2,      2,      4,      8,      8,      8,      8,      8,      8,      8,      8,      8 ),
+   "CFG_USERCODES"     : (      0,      8,      8,      8,      8,      8,      8,     48,     48,     48,     48,     48,     48,     48,     48,     48,     48 ),
    "CFG_PROXTAGS"      : (      0,      0,      8,      0,      8,      8,      0,      8,     32,     32,     32,     32,     32,     32,     32,     32,     32 ),
    "CFG_ZONECUSTOM"    : (      0,      5,      5,      5,      5,      5,      5,      5,      5,      5,      5,      5,      5,      5,      5,      5,      5 ),
-   "CFG_WIRELESS"      : (     28,     28,     28,     28,     28,     28,     29,     29,     62,     62,     62,     62,     62,     64,     62,     62,     64 ), # Wireless + Wired total 30 or 64
-   "CFG_WIRED"         : (      2,      2,      2,      2,      2,      2,      1,      1,      2,      2,      2,      2,      2,      0,      2,      2,      0 ),
+   "CFG_WIRELESS"      : (      0,     28,     28,     28,     28,     28,     29,     29,     62,     62,     62,     62,     62,     64,     62,     62,     64 ), # Wireless + Wired total 30 or 64
+   "CFG_WIRED"         : (      0,      2,      2,      2,      2,      2,      1,      1,      2,      2,      2,      2,      2,      0,      2,      2,      0 ),
    "CFG_AUTO_ENROLL"   : (  False,  False,  False,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,  False,   True,   True,  False ), # 360 and 360R cannot autoenroll to Powerlink
    "CFG_AUTO_SYNCTIME" : (  False,  False,  False,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True ), # Assume 360 and 360R can auto sync time
    "CFG_POWERMASTER"   : (  False,  False,  False,  False,  False,  False,  False,   True,   True,   True,   True,   True,   True,   True,   True,   True,   True ), # Panels that use and respond to the additional PowerMaster Messages
@@ -342,33 +342,22 @@ pmPanelSettingsB0_t = {
 
    0x0000 : PanelSettings( 6, B0All,  1,  6, ""   , "Central Station Account Number 1"),  # size of each entry is 6 nibbles
    0x0100 : PanelSettings( 6, B0All,  1,  6, ""   , "Central Station Account Number 1"),  # size of each entry is 6 nibbles
-                                                  
    0x0200 : PanelSettings( 7, B0All,  2,  0, ""   , "Panel Serial Number"),
    0x0300 : PanelSettings( 9, B0All,  1, 12, ""   , "Central Station IP 1"),              # 12 nibbles
-                                                  
    0x0601 : PanelSettings( 4, B0All,  4,  1, ""   , "Unknown A"),                         # size of each entry is 4 nibbles
-                                                  
    0x0800 : PanelSettings(99, B0All,  1,  4, ""   , "User Code"),                         # size of each entry is 4 nibbles
-                                                  
    0x0F00 : PanelSettings( 5, B0All,  1,  4, ""   , "Download Code"),                     # size of each entry is 4 nibbles
-                                                  
    0x1000 : PanelSettings( 4, B0All,  4,  0, ""   , "Panel EPROM Version"),
-                                                  
    0x2400 : PanelSettings( 5, B0All,  4,  0, ""   , "Panel EPROM Version"),
    0x2900 : PanelSettings( 4, B0All,  4,  0, ""   , "Unknown B"),
    0x3000 : PanelSettings( 4, B0All,  4,  0, ""   , "Unknown C"),
-                                                  
    0x2C00 : PanelSettings(19, B0All,  6,  0, ""   , "Panel Default Version"),
    0x2D00 : PanelSettings(19, B0All,  6,  0, ""   , "Panel Software Version"),
-                                                  
    0x3C00 : PanelSettings(18, B0All,  8,  0, ""   , "Panel Hardware Version"),
-                                                  
    0x3D00 : PanelSettings(19, B0All,  6,  0, ""   , "Panel RSU Version"),
    0x3E00 : PanelSettings(19, B0All,  6,  0, ""   , "Panel Boot Version"),
-                                                  
    0x5400 : PanelSettings( 5, B0All,  1,  4, ""   , "Installer Code"),                    # size of each entry is 4 nibbles
    0x5500 : PanelSettings( 5, B0All,  1,  4, ""   , "Master Code"),                       # size of each entry is 4 nibbles
-                                                  
    0x5800 : PanelSettings( 4, B0All,  4,  2, ""   , "Unknown D"),
 }
 
