@@ -96,7 +96,6 @@ pmPanelTroubleType_t = {
 
 # Convert byte array to a string of hex values
 def toString(array_alpha: bytearray, gap = " "):
-    
     return ("".join(("%02x"+gap) % b for b in array_alpha))[:-len(gap)] if len(gap) > 0 else ("".join("%02x" % b for b in array_alpha))
 
 class vloggerclass:
@@ -734,7 +733,8 @@ class AlPanelInterfaceHelper(AlPanelInterface):
 
         self.PanelAlarmStatus = AlAlarmType.NONE
         self.PanelTroubleStatus = AlTroubleType.NONE
-        self.PanelLastEvent = "Unknown"
+        self.PanelLastEvent = "Startup/Startup"
+        self.PanelLastEventTime = self._getTimeFunction().strftime("%d/%m/%Y, %H:%M:%S")
         self.PanelStatusText = "Unknown"
         self.LastPanelEventData = {}
 
@@ -760,7 +760,7 @@ class AlPanelInterfaceHelper(AlPanelInterface):
                 log.debug("     key {0:<2} X10    {1}".format(key, device))
         
         log.debug("   Model {: <18}     PowerMaster {: <18}     LastEvent {: <18}     Ready   {: <13}".format(self.PanelModel,
-                                        'Yes' if self.PowerMaster else 'No', self.getPanelLastEvent(), 'Yes' if self.PanelReady else 'No'))
+                                        'Yes' if self.PowerMaster else 'No', self.getPanelLastEvent()[0], 'Yes' if self.PanelReady else 'No'))
         pm = titlecase(self.PanelMode.name.replace("_"," ")) # str(AlPanelMode()[self.PanelMode]).replace("_"," ")
         ts = titlecase(self.PanelTroubleStatus.name.replace("_"," ")) # str(AlTroubleType()[self.PanelTroubleStatus]).replace("_"," ")
         al = titlecase(self.PanelAlarmStatus.name.replace("_"," ")) # str(AlAlarmType()[self.PanelAlarmStatus]).replace("_"," ")
@@ -807,8 +807,8 @@ class AlPanelInterfaceHelper(AlPanelInterface):
             return self.PanelBypass
         return False
 
-    def getPanelLastEvent(self) -> str:
-        return self.PanelLastEvent
+    def getPanelLastEvent(self) -> (str, str):
+        return (self.PanelLastEvent, self.PanelLastEventTime)
 
     def requestPanelCommand(self, state : AlPanelCommand, code : str = "") -> AlCommandStatus:
         """ Send a request to the panel to Arm/Disarm """
@@ -866,12 +866,13 @@ class AlPanelInterfaceHelper(AlPanelInterface):
 
         if count > 0:
             self.PanelLastEvent = name[count-1] + "/" + zonemode[count-1]
+            self.PanelLastEventTime = self._getTimeFunction().strftime("%d/%m/%Y, %H:%M:%S")
             for i in range(0, count):
                 a = {}
                 a["name"] = titlecase(name[i].replace("_"," ").lower())
                 a["event"] = titlecase(zonemode[i].replace("_"," ").lower())
                 log.debug(f"[PanelUpdate]  {a}")
-                self.onPanelChangeHandler(AlCondition.PANEL_UPDATE, a)
+                self.sendPanelUpdate(AlCondition.PANEL_UPDATE, a)
 
         #log.debug(f"Last event {datadict}")
         return datadict
@@ -887,6 +888,8 @@ class AlPanelInterfaceHelper(AlPanelInterface):
         datadict["bypass"] = self.PanelBypass
         datadict["alarm"] = titlecase(self.PanelAlarmStatus.name.replace("_"," ").lower())
         datadict["trouble"] = titlecase(self.PanelTroubleStatus.name.replace("_"," ").lower())
+        datadict["lastevent"] = titlecase(self.PanelLastEvent.replace("_"," ").lower())
+        datadict["lasteventtime"] = self.PanelLastEventTime
         return datadict
 
     # Set the onDisconnect callback handlers
@@ -909,12 +912,9 @@ class AlPanelInterfaceHelper(AlPanelInterface):
     def onPanelChange(self, fn : Callable):             # onPanelChange ( datadictionary : dict )
         self.onPanelChangeHandler = fn
 
-    def sendPanelUpdate(self, ev : AlCondition):
+    def sendPanelUpdate(self, ev : AlCondition, d : dict = {} ):
         if self.onPanelChangeHandler is not None:
-            if ev == AlCondition.PANEL_UPDATE:
-                self.onPanelChangeHandler(AlCondition.PUSH_CHANGE, {})                
-            else:
-                self.onPanelChangeHandler(ev, {})
+            self.onPanelChangeHandler(ev, d)
 
     def _searchDict(self, dict, v_search):
         for k, v in dict.items():

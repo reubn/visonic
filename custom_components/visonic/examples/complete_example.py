@@ -529,8 +529,8 @@ class VisonicClient:
             self.visonicProtocol.updateSettings(self.__getConfigData())
         #print("[updateConfig] exit")
 
-    def getPanelLastEvent(self) -> str:
-        """ Is the siren active. """
+    def getPanelLastEvent(self) -> (str, str):
+        """ Get Last Panel Event. """
         if self.visonicProtocol is not None:
             return self.visonicProtocol.getPanelLastEvent()
         return False

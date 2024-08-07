@@ -121,8 +121,8 @@ from .const import (
 #    "system_health",
 #    "trigger",
 #]
-  
-CLIENT_VERSION = "0.9.6.15"
+
+CLIENT_VERSION = "0.9.6.18"
 
 MAX_CLIENT_LOG_ENTRIES = 300
 
