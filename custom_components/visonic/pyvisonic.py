@@ -1876,7 +1876,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                     elif len(self.pmExpectedResponse) > 0 and self.expectedResponseTimeout >= RESPONSE_TIMEOUT:
                         # Expected response timeouts are only a problem when in Powerlink Mode as we expect a response
                         #   But in all modes, give the panel a _triggerRestoreStatus
-                        if len(self.pmExpectedResponse) == 1 and self.pmExpectedResponse[0] == ACK_MESSAGE:   
+                        if len(self.pmExpectedResponse) == 1 and ACK_MESSAGE in self.pmExpectedResponse:
                             pass    # If it's only for an acknowledge response then ignore it
                         else:
                             st = '[{}]'.format(', '.join(hex(x) for x in self.pmExpectedResponse))
