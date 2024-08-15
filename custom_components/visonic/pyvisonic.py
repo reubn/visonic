@@ -100,7 +100,7 @@ except:
     from pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, pmPanelTroubleType_t, pmPanelAlarmType_t, AlPanelInterfaceHelper, 
                           AlSensorDeviceHelper, AlSwitchDeviceHelper)
 
-PLUGIN_VERSION = "1.3.6.7"
+PLUGIN_VERSION = "1.3.6.8"
 
 # Some constants to help readability of the code
 
@@ -4439,8 +4439,10 @@ class PacketHandling(ProtocolBase):
         # 02 - Closed (need to check timestamp)
         # 03 - Motion (need to check timestamp)
         # 04 - CheckedIn?  As in device checked in.     
-        if sensor in self.SensorList and code >= 1:
-            if self.SensorList[sensor].statuslog is None or (self.SensorList[sensor].statuslog - pmtime) >= timedelta(milliseconds=10):
+        if sensor in self.SensorList and (code == 0 or code == 4):
+            self.SensorList[sensor].statuslog = pmtime
+        elif sensor in self.SensorList and code >= 1:
+            if self.SensorList[sensor].statuslog is None or (pmtime - self.SensorList[sensor].statuslog) >= timedelta(milliseconds=10):
                 log.debug(f"[handle_msgtypeB0]           Sensor Updated = {sensor:>2}  code {code}     time {pmtime}")
                 if code == 1:
                     self.UpdateContactSensor(sensor = sensor, status = True, time = pmtime)

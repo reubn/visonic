@@ -335,6 +335,98 @@ class AlSensorDeviceHelper(AlSensorDevice):
             return NO_DELAY_SET if self.motiondelaytime == 0xFFFF else str(self.motiondelaytime)
         return NO_DELAY_SET
 
+    def updateContactSensor(self, status = None, trigger = None):
+        #log.debug("[UpdateContactSensor]   Sensor {0}   before".format(self.id))
+        #self._dumpSensorsToLogFile()
+        if trigger is not None and trigger:
+            # If trigger is set then the caller is confident that it is a motion or camera sensor
+            log.debug("[UpdateContactSensor]   Sensor {0}   triggered to True".format(self.id))
+            self.triggered = True
+            self.triggertime = getTimeFunction()
+            self.pushChange(AlSensorCondition.STATE)
+        elif status is not None and self.status != status:
+            # The current setting is different
+            if status:
+                log.debug("[UpdateContactSensor]   Sensor {0}   triggered to True".format(self.id))
+                self.triggered = True
+                self.triggertime = getTimeFunction()
+            if self.getSensorType() != AlSensorType.MOTION and self.getSensorType() != AlSensorType.CAMERA:
+                # Not a motion or camera to set status
+                log.debug("[UpdateContactSensor]   Sensor {0}   status from {1} to {2}".format(self.id, self.status, status))
+                self.status = status
+                #if status is not None and not status:
+                #    self.SensorList[sensor].pushChange(AlSensorCondition.RESET)
+            # Push change as status has toggled
+            self.pushChange(AlSensorCondition.STATE)
+        # The pushchange function calls the sensors onchange function so it should have already seen triggered and status values, so we can reset triggered
+        self.triggered = False
+
+    def do_status(self, stat):
+        self.updateContactSensor(status = stat)
+
+    def do_trigger(self, trig):
+        self.updateContactSensor(trigger = trig)
+
+    def do_enrolled(self, val : bool) -> bool:
+        if val is not None and self.enrolled != val:
+            self.enrolled = val
+            if self.enrolled:
+                self.pushChange(AlSensorCondition.ENROLLED)
+            else:
+                self.pushChange(AlSensorCondition.RESET)
+            return True # The value has changed
+        return False # The value has not changed
+
+    def do_bypass(self, val : bool) -> bool:
+        if val is not None and self.bypass != val:
+            self.bypass = val
+            if self.bypass:
+                self.pushChange(AlSensorCondition.BYPASS)
+            else:
+                self.pushChange(AlSensorCondition.ARMED)
+            return True # The value has changed
+        return False # The value has not changed
+
+    def do_ztrip(self, val : bool) -> bool:
+        if val is not None and self.ztrip != val:
+            self.ztrip = val
+            if self.ztrip: # I can't remember seeing this from the panel
+                self.pushChange(AlSensorCondition.STATE)
+            #else:
+            #    self.pushChange(AlSensorCondition.RESET)
+            return True # The value has changed
+        return False # The value has not changed
+
+    def do_ztamper(self, val : bool) -> bool:
+        if val is not None and self.ztamper != val:
+            self.ztamper = val
+            if self.ztamper:
+                self.pushChange(AlSensorCondition.TAMPER)
+            else:
+                self.pushChange(AlSensorCondition.RESTORE)
+            return True # The value has changed
+        return False # The value has not changed
+
+    def do_battery(self, val : bool) -> bool:
+        if val is not None and self.lowbatt != val:
+            self.lowbatt = val
+            if self.lowbatt:
+                self.pushChange(AlSensorCondition.BATTERY)
+            #else:
+            #    self.pushChange(AlSensorCondition.RESET)
+            return True # The value has changed
+        return False # The value has not changed
+
+    def do_tamper(self, val : bool) -> bool:
+        if val is not None and self.tamper != val:
+            self.tamper = val
+            if self.tamper:
+                self.pushChange(AlSensorCondition.TAMPER)
+            else:
+                self.pushChange(AlSensorCondition.RESTORE)
+            return True # The value has changed
+        return False # The value has not changed
+
     # JSON conversions
     def fromJSON(self, decode):
         #log.debug("   In sensor fromJSON start {0}".format(self))
