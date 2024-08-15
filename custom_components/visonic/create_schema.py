@@ -69,16 +69,10 @@ from .pyconst import AlSensorCondition
 
 # These need to match the "sensor_event_list" selector in the language json file
 AvailableSensorEvents = {
-#    "state" : AlSensorCondition.STATE,
-#    "tamper" : AlSensorCondition.TAMPER,
-#    "battery" : AlSensorCondition.BATTERY,
-#    "bypass" : AlSensorCondition.BYPASS,
-#    "enrolled" : AlSensorCondition.ENROLLED,
     "problem" : AlSensorCondition.PROBLEM,
     "fire" : AlSensorCondition.FIRE,
     "emergency" : AlSensorCondition.EMERGENCY,
     "panic" : AlSensorCondition.PANIC
-#    "camera" : AlSensorCondition.CAMERA
 }
 
 TIME_UNITS = [

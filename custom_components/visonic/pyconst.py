@@ -204,7 +204,7 @@ a = AlPanelCommand()
 class AlX10Command(AlEnum):
     OFF = AlIntEnum(0)
     ON = AlIntEnum(1)
-    DIM = AlIntEnum(2)
+    DIMMER = AlIntEnum(2)
     BRIGHTEN = AlIntEnum(3)
 a = AlX10Command()
 
@@ -264,6 +264,8 @@ class AlSensorCondition(AlEnum):
     EMERGENCY = AlIntEnum(8)
     PANIC = AlIntEnum(9)
     CAMERA = AlIntEnum(10)
+    ARMED = AlIntEnum(11)
+    RESTORE = AlIntEnum(12)
 a = AlSensorCondition()
 
 # List of sensor types

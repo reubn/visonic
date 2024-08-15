@@ -100,7 +100,7 @@ except:
     from pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, pmPanelTroubleType_t, pmPanelAlarmType_t, AlPanelInterfaceHelper, 
                           AlSensorDeviceHelper, AlSwitchDeviceHelper)
 
-PLUGIN_VERSION = "1.3.6.4"
+PLUGIN_VERSION = "1.3.6.7"
 
 # Some constants to help readability of the code
 
@@ -239,7 +239,7 @@ pmPanelConfig_t = {    #      0       1       2       3       4       5       6 
 #    debugprint  If False then do not log the full raw data as it may contain the user code
 #    waittime    a number of seconds after sending the command to wait before sending the next command
 
-DEBUG_MESSAGE_SEND = True
+DEBUG_MESSAGE_SEND = False
 FULL = 2                                # Show the full data in the log file, including the message content
 CMD = 2 if DEBUG_MESSAGE_SEND else 1    # Show only the msg in the log file, not the message content
 NONE = 2 if DEBUG_MESSAGE_SEND else 0   # do not log the sending of this message
@@ -264,14 +264,14 @@ pmSendMsg = {
 
    "MSG_NO_IDEA"      : VisonicCommand(convertByteArray('AB 0E 00 17 1E 00 00 03 01 05 00 43'), None   ,  True, False,  FULL, 0.0, "PowerMaster after jpg feedback" ), # 
 
-   "MSG_INIT"         : VisonicCommand(convertByteArray('AB 0A 00 01 00 00 00 00 00 00 00 43'), None   ,  True, False,  FULL, 8.0, "Init PowerLink Connection" ),
+   "MSG_INIT"         : VisonicCommand(convertByteArray('AB 0A 00 01 00 00 00 00 00 00 00 43'), None   ,  True, False,  FULL, 3.0, "Init PowerLink Connection" ),
    "MSG_X10NAMES"     : VisonicCommand(convertByteArray('AC 00 00 00 00 00 00 00 00 00 00 43'), [0xAC] , False, False,  FULL, 0.0, "Requesting X10 Names" ),
    "MSG_GET_IMAGE"    : VisonicCommand(convertByteArray('AD 99 99 0A FF FF 00 00 00 00 00 43'), [0xAD] ,  True, False,  FULL, 0.0, "Requesting JPG Image" ),           # The first 99 might be the number of images. Request a jpg image, second 99 is the zone.  
 
    # Command codes (powerlink) do not have the 0x43 on the end and are only 11 values
    "MSG_DOWNLOAD"     : VisonicCommand(convertByteArray('24 00 00 99 99 00 00 00 00 00 00')   , [0x3C] , False,  True,   CMD, 0.0, "Start Download Mode" ),            # This gets either an acknowledge OR an Access Denied response
    "MSG_WRITE"        : VisonicCommand(convertByteArray('3D 00 00 00 00 00 00 00 00 00 00')   , None   , False, False,  NONE, 0.0, "Write Data Set" ),
-   "MSG_DL"           : VisonicCommand(convertByteArray('3E 00 00 00 00 B0 00 00 00 00 00')   , [0x3F] ,  True, False,  NONE, 0.0, "Download Data Set" ),
+   "MSG_DL"           : VisonicCommand(convertByteArray('3E 00 00 00 00 B0 00 00 00 00 00')   , [0x3F] ,  True, False,   CMD, 0.0, "Download Data Set" ),
    "MSG_SETTIME"      : VisonicCommand(convertByteArray('46 F8 00 01 02 03 04 05 06 FF FF')   , None   , False, False,  FULL, 0.0, "Setting Time" ),                   # may not need an ack
    "MSG_SER_TYPE"     : VisonicCommand(convertByteArray('5A 30 04 01 00 00 00 00 00 00 00')   , [0x33] , False, False,  FULL, 0.0, "Get Serial Type" ),
    
@@ -374,7 +374,7 @@ pmSirenMode_t = {
 
 # Data to embed in the MSG_X10PGM message
 pmX10State_t = {
-   AlX10Command.OFF : 0x00, AlX10Command.ON : 0x01, AlX10Command.DIM : 0x0A, AlX10Command.BRIGHTEN : 0x0B
+   AlX10Command.OFF : 0x00, AlX10Command.ON : 0x01, AlX10Command.DIMMER : 0x0A, AlX10Command.BRIGHTEN : 0x0B
 }
 
 ##############################################################################################################################################################################################################################################
@@ -388,8 +388,8 @@ pmX10State_t = {
 #    flexiblelength provides support for messages that have a variable length
 #    ignorechecksum is for messages that do not have a checksum.  These are F1 and F4 messages (so far)
 #    When length is 0 then we stop processing the message on the first PACKET_FOOTER. This is only used for the short messages (4 or 5 bytes long) like ack, stop, denied and timeout
-DebugC = True  # Debug incoming control
-DebugM = True  # Debug incoming message data
+DebugC = False  # Debug incoming control
+DebugM = False  # Debug incoming message data
 DebugI = False  # Debug incoming image data
 PanelCallBack = collections.namedtuple("PanelCallBack", 'length ackneeded isvariablelength varlenbytepos flexiblelength ignorechecksum debugprint' )
 pmReceiveMsg_t = {
@@ -410,12 +410,12 @@ pmReceiveMsg_t = {
    0xA5     : PanelCallBack( 15,  True, False,  0, 0, False, DebugM ),   # 15 Status Update       Length was 15 but panel seems to send different lengths
    0xA6     : PanelCallBack( 15,  True, False,  0, 0, False, DebugM ),   # 15 Zone Types I think!!!!
    0xA7     : PanelCallBack( 15,  True, False,  0, 0, False, DebugM ),   # 15 Panel Status Change
-   0xAB     : PanelCallBack( 15,  True, False,  0, 0, False,   True ),   # 15 Enroll Request 0x0A  OR Ping 0x03      Length was 15 but panel seems to send different lengths
+   0xAB     : PanelCallBack( 15,  True, False,  0, 0, False, DebugC ),   # 15 Enroll Request 0x0A  OR Ping 0x03      Length was 15 but panel seems to send different lengths
    0xAC     : PanelCallBack( 15,  True, False,  0, 0, False,   True ),   # 15 X10 Names ???
    0xAD     : PanelCallBack( 15,  True, False,  0, 0, False,   True ),   # 15 Panel responds with this when we ask for JPG images
-   0xB0     : PanelCallBack(  8,  True,  True,  4, 2, False,   True ),   # The B0 message comes in varying lengths, sometimes it is shorter than what it states and the CRC is sometimes wrong
+   0xB0     : PanelCallBack(  8,  True,  True,  4, 2, False, DebugM ),   # The B0 message comes in varying lengths, sometimes it is shorter than what it states and the CRC is sometimes wrong
    REDIRECT : PanelCallBack(  5, False,  True,  2, 0, False,  False ),   # TESTING: These are redirected Powerlink messages. 0D C0 len <data> cs 0A   so 5 plus the original data length
-   VISPROX  : PanelCallBack(  9, False, False,  0, 0, False,   True ),   # VISPROX : Interaction with Visonic Proxy
+   VISPROX  : PanelCallBack( 10, False, False,  0, 0, False,   True ),   # VISPROX : Interaction with Visonic Proxy
    # The F1 message needs to be ignored, I have no idea what it is but the crc is always wrong and only Powermax+ panels seem to send it. Assume a minimum length of 9, a variable length and ignore the checksum calculation.
    0xF1 : PanelCallBack(  9,  True,  True,  0, 0,  True, DebugC ),   # Ignore checksum on all F1 messages
    # The F4 message comes in varying lengths. It is the image data from a PIR camera. Ignore checksum on all F4 messages
@@ -1092,6 +1092,9 @@ pmZoneSensorMaxGeneric_t = {
    0xF : AlSensorType.WIRED
 } # unknown to date: Push Button, Flood, Universal
 
+
+#0x75 : ZoneSensorType("Next+ K9-85 MCW", AlSensorType.MOTION ), # Jan
+#0x86 : ZoneSensorType("MCT-426", AlSensorType.SMOKE ), # Jan
 ZoneSensorType = collections.namedtuple("ZoneSensorType", 'name func' )
 pmZoneSensorMax_t = {
    0x6D : ZoneSensorType("MCX-601 Wireless Repeater", AlSensorType.IGNORED ),       # Joao-Sousa   ********************* Wireless Repeater so exclude it **************
@@ -1100,11 +1103,12 @@ pmZoneSensorMax_t = {
    0x1A : ZoneSensorType("MCW-K980", AlSensorType.MOTION ),        # Botap
    0x6A : ZoneSensorType("MCT-550", AlSensorType.FLOOD ),          # Joao-Sousa
    0x74 : ZoneSensorType("Next+ K9-85", AlSensorType.MOTION ),     # christopheVia
-#   0x75 : ZoneSensorType("Next K9-85", AlSensorType.MOTION ),      # thermostat (Visonic part number 0-3592-B, NEXT K985 DDMCW)
+#   0x75 : ZoneSensorType("Next K9-85", AlSensorType.MOTION ),      # thermostat (Visonic part number 0-3592-B, NEXT K9-85 DDMCW)
    0x75 : ZoneSensorType("MCT-302", AlSensorType.MAGNET ),         # 15/9/23 rogerthn2019 (Powermax Pro) and others have this sensor so removed the previous setting
    0x76 : ZoneSensorType("MCT-302", AlSensorType.MAGNET ),         # open1999
    0x7A : ZoneSensorType("MCT-550", AlSensorType.FLOOD ),          # fguerzoni, Joao-Sousa
    0x86 : ZoneSensorType("MCT-302", AlSensorType.MAGNET ),         # Joao-Sousa
+   0x87 : ZoneSensorType("MCT-302", AlSensorType.MAGNET ),         # Jan
    0x8A : ZoneSensorType("MCT-550", AlSensorType.FLOOD ),          # Joao-Sousa
    0x93 : ZoneSensorType("Next MCW", AlSensorType.MOTION ),        # Tomas-Corral
    0x95 : ZoneSensorType("MCT-302", AlSensorType.MAGNET ),         # me, fguerzoni
@@ -1181,13 +1185,13 @@ class VisonicListEntry:
             # are we waiting for an acknowledge from the panel (do not send a message until we get it)
             if self.command.waitforack:
                 self.response.append(ACK_MESSAGE)  # add an acknowledge to the list
-            self.triedResendingMessage = False
+        self.triedResendingMessage = False
 
     def __str__(self):
         if self.command is not None:
             return ("Command:{0}    Options:{1}".format(self.command.msg, self.options))
         elif self.raw is not None:
-            return ("Raw: {0}".format(self.raw))
+            return ("Raw: {0}".format(toString(self.raw)))
         return ("Command:None")
 
 class SensorDevice(AlSensorDeviceHelper):
@@ -1393,7 +1397,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         self.ignoreF4DataMessages = False
         self.image_ignore = set()
 
-
     def updateSettings(self, newdata: PanelConfig):
         if newdata is not None:
             # log.debug("[updateSettings] Settings refreshed - Using panel config {0}".format(newdata))
@@ -1477,7 +1480,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         # Empty the X10 details
         self.SwitchList = {}
 
-        # Save the EEPROM data when downloaded
+        # empty the EEPROM data when stopped
         self.pmRawSettings = {}
 
         self.lastRecvOfPanelData = None
@@ -1721,7 +1724,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                     # This supports the loopback test
                     await asyncio.sleep(5.0)
                     self._clearList()
-                    self._sendCommand("MSG_STOP")
+                    await self._sendCommandAsync("MSG_STOP")
 
                 else:
                     #  We set the time at the end of download and then check it periodically
@@ -1730,7 +1733,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                         if settime_counter == 14400:      # every 4 hours (approx)
                             settime_counter = 0
                             # Get the time from the panel (this will compare to local time and set the panel time if different)
-                            self._sendCommand("MSG_GETTIME")
+                            await self._sendCommandAsync("MSG_GETTIME")
 
                     # Watchdog functionality
                     self.watchdog_counter = self.watchdog_counter + 1
@@ -1779,7 +1782,8 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                         # Second, if not actually doing download but download is incomplete then try every DOWNLOAD_RETRY_DELAY seconds
                         self._reset_watchdog_timeout()
                         download_counter = download_counter + 1
-                        log.debug("[Controller] download_counter is {0}".format(download_counter))
+                        if download_counter % 5 == 0:
+                            log.debug("[Controller] download_counter is {0}".format(download_counter))
                         if download_counter >= DOWNLOAD_TIMEOUT_GIVE_UP:
                             download_counter = 0
                             log.warning("[Controller] ********************** Download Timer has Expired, Download has taken far too long *********************")
@@ -1877,7 +1881,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                         # Expected response timeouts are only a problem when in Powerlink Mode as we expect a response
                         #   But in all modes, give the panel a _triggerRestoreStatus
                         if len(self.pmExpectedResponse) == 1 and ACK_MESSAGE in self.pmExpectedResponse:
-                            pass    # If it's only for an acknowledge response then ignore it
+                            self.pmExpectedResponse = set()  # If it's only for an acknowledge response then ignore it
                         else:
                             st = '[{}]'.format(', '.join(hex(x) for x in self.pmExpectedResponse))
                             log.debug("[Controller] ****************************** Response Timer Expired ********************************")
@@ -1913,20 +1917,20 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                             if (mode_counter % 120) == 0:
                                 log.debug("[Controller] ****************************** Asking For Panel Sensor State ****************************")
                                 # This is probably too much for the panel and also too often but for testing this will be OK
-                                self._sendCommand("MSG_PM_SENSORS")  # This asks the panel to send panel sensors                
+                                await self._sendCommandAsync("MSG_PM_SENSORS")  # This asks the panel to send panel sensors                
                         elif self.ForceStandardMode:
                             # Do most of this for ALL Panel Types
                             # Only check these every 180 seconds
                             if (mode_counter % 180) == 0:
                                 if self.PanelState == AlPanelStatus.UNKNOWN:
                                     log.debug("[Controller] ****************************** Getting Panel Status ********************************")
-                                    self._sendCommand("MSG_STATUS_SEN")
+                                    await self._sendCommandAsync("MSG_STATUS_SEN")
                                 elif self.PanelState == AlPanelStatus.DOWNLOADING:
                                     log.debug("[Controller] ****************************** Exit Download Kicker ********************************")
                                     self._sendInterfaceResetCommand()
                                 elif not self.pmGotPanelDetails:
                                     log.debug("[Controller] ****************************** Asking For Panel Details ****************************")
-                                    self._sendCommand("MSG_BUMP")
+                                    await self._sendCommandAsync("MSG_BUMP")
                                 else:
                                     # The first time this may create sensors (for PowerMaster, especially those in the range Z33 to Z64 as the A5 message will not have created them)
                                     # Subsequent calls make sure we have all zone names, zone types and the sensor list
@@ -1958,6 +1962,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                             log_sensor_state_counter = 0
                             self._dumpSensorsToLogFile()
 
+                    loopy = 10
                     # Is it time to send an I'm Alive message to the panel
                     if len(self.SendList) == 0 and not self.pmDownloadMode and self.keep_alive_counter >= self.KeepAlivePeriod:  #
                         # Every self.KeepAlivePeriod seconds, unless watchdog has been reset
@@ -1968,25 +1973,35 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                             status_counter = 0
                             if not self.pmPowerlinkMode:
                                 # When is standard mode, sending this asks the panel to send us the status so we know that the panel is ok.
-                                self._sendCommand("MSG_STATUS")  # Asks the panel to send us the A5 message set
+                                await self._sendCommandAsync("MSG_STATUS")  # Asks the panel to send us the A5 message set
                             elif self.PowerMaster is not None and self.PowerMaster:
                                 # When in powerlink mode and the panel is PowerMaster get the status to make sure the sensor states get updated
                                 #   (if powerlink and powermax panel then no need to keep doing this)
-                                # self._sendCommand("MSG_RESTORE")  # Commented out on 3/12/2020 as user with PM10, the panel keeps ignoring the MSG_RESTORE
-                                self._sendCommand("MSG_STATUS")  #
+                                # await self._sendCommandAsync("MSG_RESTORE")  # Commented out on 3/12/2020 as user with PM10, the panel keeps ignoring the MSG_RESTORE
+                                await self._sendCommandAsync("MSG_STATUS")  #
                             else:
                                 # When in powerlink mode and the panel is PowerMax, get the bypass status to make sure the sensor states get updated
                                 # This is to make sure that if the user changes the setting on the panel itself, this updates the sensor state here
-                                self._sendCommand("MSG_BYPASSTAT")
+                                await self._sendCommandAsync("MSG_BYPASSTAT")
                         else:
                             # Send I'm Alive to the panel so it knows we're still here
-                            self._sendCommand("MSG_ALIVE")
+                            await self._sendCommandAsync ("MSG_ALIVE")
                     else:
+                        if not self.suspendAllOperations and len(self.SendList) > 0 and len(self.pmExpectedResponse) == 0:
+                            log.debug(f"[Controller] flushing    {len(self.SendList)} {len(self.pmExpectedResponse)} {self.pmExpectedResponse}")
+                            # log.debug(f"[Controller] flushing    {len(self.SendList)} {len(self.pmExpectedResponse)} {self.pmExpectedResponse}    {self.pmLastSentMessage}")
+                            while loopy >= 2 and not self.suspendAllOperations and len(self.SendList) > 0 and len(self.pmExpectedResponse) == 0:
+                                #log.debug(f"[Controller]       Waiting to empty send command queue  {loopy=}")
+                                await self._sendCommandAsync(None)  # Check send queue
+                                await asyncio.sleep(0.2)
+                                loopy = loopy - 2
+
                         # Every 1.0 seconds, try to flush the send queue
-                        self._sendCommand(None)  # check send queue
+                        await self._sendCommandAsync(None)  # check send queue
 
                     # sleep, doesn't need to be highly accurate so just count each second
-                    await asyncio.sleep(1.0)
+                    #await asyncio.sleep(1.0)
+                    await asyncio.sleep(0.1 * loopy)
 
                     if not self.suspendAllOperations:  ## To make sure as it could have changed in the 1 second sleep
                         if self.lastPacket is None:
@@ -2224,7 +2239,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                 self.pmFirstCRCErrorTime = self._getUTCTimeFunction()
 
     def _processReceivedMessage(self, ackneeded, debugp, data):
-        # Unknown Message has been received
+        # Message has been received
         msgType = data[1]
         # log.debug("[data receiver] *** Received validated message " + hex(msgType).upper() + "   data " + toString(data))
         # Send an ACK if needed
@@ -2332,19 +2347,23 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                 else:
                     sData += self._calculateCRC(data)
                 sData += b"\x0A"
+            else:
+                log.warning("[sendPdu]      Invalid message data, not sending anything to the panel")
+                return
 
+            # If needed, create a time delay between sending the panel messages as the panel can't cope (not enough CPU power)
             interval = self._getUTCTimeFunction() - self.pmLastTransactionTime
             sleepytime = timedelta(milliseconds=150) - interval
             if sleepytime > timedelta(milliseconds=0):
-                # log.debug("[sendPdu] Speepytime {0}".format(sleepytime.total_seconds()))
+                #log.debug("[sendPdu] Sleepytime {0}".format(sleepytime.total_seconds()))
                 await asyncio.sleep(sleepytime.total_seconds())
 
             # no need to send i'm alive message for a while as we're about to send a command anyway
             self._reset_keep_alive_messages()
-            self.firstCmdSent = True
             # Log some useful information in debug mode
             if self.transport is not None:
                 self.transport.write(sData)
+                self.firstCmdSent = True
             else:
                 log.debug("[sendPdu]      Comms transport has been set to none, must be in process of terminating comms")
 
@@ -2411,7 +2430,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
             #    self._addMessageToSendList(message_type, kwargs)
             #    # We could terminate the sleep function early in _keep_alive_and_watchdog_timer but I don't know how (and it would screw up the timing in that function anyway)
             #    #   As it is, it will take up to 1 second to send the message (also remember that it is queued with other messages as well)
-
 
     # This is called to queue a command.
     # If it is possible, then also send the message
@@ -2527,7 +2545,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
 
         # Populate the full list of EEPROM blocks
         self._populateEPROMDownload(isPowerMaster)
-
         # Send the first EEPROM block to the panel to retrieve
         self._sendCommand("MSG_DL", options=[ [1, self.myDownloadList.pop(0)] ])  # Read the names of the zones
 
@@ -3530,9 +3547,9 @@ class PacketHandling(ProtocolBase):
         self._saveEPROMSettings(iPage, iIndex, data[2:])
 
     def handle_msgtype3C(self, data):  # Panel Info Messsage when start the download
-        """The panel information is in 4 & 5
-        5=PanelType e.g. PowerMax, PowerMaster
-        4=Sub model type of the panel - just informational, not used
+        """ The panel information is in 4 & 5
+            5=PanelType e.g. PowerMax, PowerMaster
+            4=Sub model type of the panel - just informational, not used
         """
         log.debug("[handle_msgtype3C] Packet = {0}".format(toString(data)))
         
@@ -4444,7 +4461,7 @@ class PacketHandling(ProtocolBase):
         # If the "if" statement below includes this variable then I'm still trying to work out what the message data means
 
         experimental = True
-        beezerodebug = True
+        beezerodebug = False
         
         #log.debug(f"[handle_msgtypeB0] Z  {hex(msgType)}  {hex(subType)}    chunky {ch}")
         if msgType == 0x03 and subType == pmSendMsgB0_t["PANEL_STATE"] and ch.datasize == 8 and ch.index == 255 and ch.length == 21:
@@ -4578,7 +4595,7 @@ class PacketHandling(ProtocolBase):
             dataContent = (dataContentA << 8) | dataContentB
             datalen = ch.length - 3
             log.debug("[handle_msgtypeB0]     ***************************** Panel Settings ********************************")
-            if beezerodebug:
+            if experimental:
                 if dataContent in pmPanelSettingsB0_t:
                     d = pmPanelSettingsB0_t[dataContent]
                     if (d.length == 0 or ch.length == d.length) and datatype == d.datatype:
@@ -4751,7 +4768,7 @@ class PacketHandling(ProtocolBase):
         if subType in self.B0_Message_Wanted:
             self.B0_Message_Wanted.remove(subType)
         
-        log.debug("[handle_msgtypeB0] Received {0} message {1}/{2} (len = {3})    data = {4}".format(self.PanelModel or "UNKNOWN_PANEL_MODEL", msgType, subType, msgLen, toString(data)))
+        #log.debug("[handle_msgtypeB0] Received {0} message {1}/{2} (len = {3})    data = {4}".format(self.PanelModel or "UNKNOWN_PANEL_MODEL", msgType, subType, msgLen, toString(data)))
 
         # Process the messages that are not chunked
         if msgType == 0x03 and subType == 0x06:

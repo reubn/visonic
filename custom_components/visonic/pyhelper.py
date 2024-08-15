@@ -167,6 +167,10 @@ def capitalize(s):
 def titlecase(s):
     return re.sub(r"[A-Za-z]+('[A-Za-z]+)?", lambda word: capitalize(word.group(0)), s)
 
+# get the current date and time
+def getTimeFunction() -> datetime:
+    return datetime.now()
+
 
 class AlSensorDeviceHelper(AlSensorDevice):
 
@@ -177,8 +181,8 @@ class AlSensorDeviceHelper(AlSensorDevice):
         self.ztypeName = kwargs.get("ztypeName", None)  # str   Zone Type Name
         self.sid = kwargs.get("sid", 0)  # int   sensor id
         self.ztype = kwargs.get("ztype", 0)  # int   zone type
-        self.zname = kwargs.get("zname", None)  # str   zone name
-        self.zchime = kwargs.get("zchime", None)  # str   zone chime
+        self.zname = kwargs.get("zname", "Unknown")  # str   zone name
+        self.zchime = kwargs.get("zchime", "Unknown")  # str   zone chime
         self.partition = kwargs.get("partition", 0)  # set   partition set (could be in more than one partition)
         self.bypass = kwargs.get("bypass", False)  # bool  if bypass is set on this sensor
         self.lowbatt = kwargs.get("lowbatt", False)  # bool  if this sensor has a low battery
@@ -189,7 +193,7 @@ class AlSensorDeviceHelper(AlSensorDevice):
         self.enrolled = kwargs.get("enrolled", False)  # bool  enrolled, as returned by the A5 message
         self.triggered = kwargs.get("triggered", False)  # bool  triggered, as returned by the A5 message
         self.triggertime = None     # datetime  This is used to time stamp in local time the occurance of the trigger
-        self.model = kwargs.get("model", None)  # str   device model
+        self.model = kwargs.get("model", "Unknown")  # str   device model
         self.motiondelaytime = kwargs.get("motiondelaytime", None)  # int   device model
         self.hasJPG = False
         self.jpg_data = None
@@ -458,7 +462,7 @@ class AlSwitchDeviceHelper(AlSwitchDevice):
             self.location = titlecase(decode["location"])
         if "state" in decode:
             s = AlX10Command.value_of(decode["state"].upper())
-            self.state = (s == AlX10Command.ON or s == AlX10Command.BRIGHTEN or s == AlX10Command.DIM)
+            self.state = (s == AlX10Command.ON or s == AlX10Command.BRIGHTEN or s == AlX10Command.DIMMER)
 
     def toJSON(self) -> dict:
         dd=json.dumps({
