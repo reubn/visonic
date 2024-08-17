@@ -101,7 +101,7 @@ except:
     from pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, pmPanelTroubleType_t, pmPanelAlarmType_t, AlPanelInterfaceHelper, 
                           AlSensorDeviceHelper, AlSwitchDeviceHelper)
 
-PLUGIN_VERSION = "1.4.0.1"
+PLUGIN_VERSION = "1.4.0.2"
 OBFUS  = True  # Obfuscate sensitive data
 
 # Some constants to help readability of the code
@@ -2055,7 +2055,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                                 
                                 if interval > timedelta(seconds=DOWNLOAD_RETRY_DELAY):            # Give it this number of seconds to start the downloading
                                     _sequencerState = OperationalStateType.TriggerEPROMDownload
-                                elif self.pmDownloadInProgress:
+                                elif self.pmDownloadInProgress or self.pmDownloadComplete:
                                     _sequencerState = OperationalStateType.DoingEPROMDownload
                                     
                             continue   # just do the while loop
@@ -2856,7 +2856,16 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         # Populate the full list of EEPROM blocks
         self._populateEPROMDownload(isPowerMaster)
         # Send the first EEPROM block to the panel to retrieve
-        self._sendCommand("MSG_DL", options=[ [1, self.myDownloadList.pop(0)] ])  # Read the names of the zones
+        if len(self.myDownloadList) == 0:
+            # This is the message to tell us that the panel has finished download mode, so we too should stop download mode
+            log.debug("[_readPanelSettings] Download Complete")
+            self.pmDownloadInProgress = False
+            self.pmDownloadMode = False
+            self.pmDownloadComplete = True
+        else:
+            log.debug("[_readPanelSettings] Download seemed to be complete but not got all EPROM data yet")
+            self.pmDownloadInProgress = True
+            self._sendCommand("MSG_DL", options=[ [1, self.myDownloadList.pop(0)] ])  # Read the next block of EEPROM data
 
 
 # This class performs transactions based on messages (ProtocolBase is the raw data)
