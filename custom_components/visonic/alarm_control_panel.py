@@ -179,9 +179,9 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
 
             # Currently may only contain "Exception Count"
             data = self._client.getClientStatusDict()
-            #_LOGGER.debug("data {data}")
+            #_LOGGER.debug(f"data {data}")
             stat = self._client.getPanelStatusDict()
-            #_LOGGER.debug("stat {stat}")
+            #_LOGGER.debug(f"stat {stat}")
 
             if data is not None and stat is not None:
                 self._device_state_attributes = {**stat, **data}
@@ -190,11 +190,11 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
             elif data is not None:
                 self._device_state_attributes = data
             
-            if "count" in self._device_state_attributes and "name" in self._device_state_attributes:
-                count = self._device_state_attributes["count"]
-                if count > 0:
-                    name = self._device_state_attributes["name"]                                    
-                    self._last_triggered = name[0]
+            if "lastevent" in self._device_state_attributes and len(self._device_state_attributes["lastevent"]) > 2:
+                pos = self._device_state_attributes["lastevent"].find('/')
+                #_LOGGER.debug(f"[alarm_control_panel]  {pos=}")
+                if pos > 2:
+                    self._last_triggered = self._device_state_attributes["lastevent"][0:pos]
 
     @property
     def state(self):

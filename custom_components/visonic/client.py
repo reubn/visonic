@@ -120,7 +120,7 @@ from .const import (
 #    "trigger",
 #]
 
-CLIENT_VERSION = "0.9.6.24"
+CLIENT_VERSION = "0.9.7.1"
 
 MAX_CLIENT_LOG_ENTRIES = 300
 
@@ -221,8 +221,8 @@ class VisonicClient:
         # Get the user defined config
         self.config = cf.copy()
         self.strlog = []
-        #self.logstate_debug(f"init panel {str(panelident)}  language {str(self.hass.config.language)}   self.config = {self.config}")
         self.panelident = panelident
+        self.logstate_debug(f"init panel {str(panelident)}  language {str(self.hass.config.language)}")
         self._initialise()
         self.logstate_info(f"Exclude sensor list = {self.exclude_sensor_list}     Exclude x10 list = {self.exclude_x10_list}")
         

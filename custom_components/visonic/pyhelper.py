@@ -335,7 +335,7 @@ class AlSensorDeviceHelper(AlSensorDevice):
             return NO_DELAY_SET if self.motiondelaytime == 0xFFFF else str(self.motiondelaytime)
         return NO_DELAY_SET
 
-    def updateContactSensor(self, status = None, trigger = None):
+    def _updateContactSensor(self, status = None, trigger = None):
         #log.debug("[UpdateContactSensor]   Sensor {0}   before".format(self.id))
         #self._dumpSensorsToLogFile()
         if trigger is not None and trigger:
@@ -362,10 +362,10 @@ class AlSensorDeviceHelper(AlSensorDevice):
         self.triggered = False
 
     def do_status(self, stat):
-        self.updateContactSensor(status = stat)
+        self._updateContactSensor(status = stat)
 
     def do_trigger(self, trig):
-        self.updateContactSensor(trigger = trig)
+        self._updateContactSensor(trigger = trig)
 
     def do_enrolled(self, val : bool) -> bool:
         if val is not None and self.enrolled != val:
@@ -948,6 +948,7 @@ class AlPanelInterfaceHelper(AlPanelInterface):
         return _getUTCTime()
 
     def setLastPanelEventData(self, count=0, type=[ ], event=[ ], zonemode=[ ], name=[ ]) -> dict:
+        log.debug(f"[setLastPanelEventData] {count} {name} {zonemode}")
         datadict = {}
         datadict["event_count"] = count
         if count > 0:
