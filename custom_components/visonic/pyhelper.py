@@ -34,12 +34,12 @@ else:
     import logging
     import datetime
     from abc import abstractmethod
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     from typing import Callable, List, TypedDict
 
     # get the current date and time
     def _getUTCTime() -> datetime:
-        return datetime.utcnow()
+        return datetime.now(tz=timezone.utc)
 
     #if DontUseLogger is None:
     mylog = logging.getLogger(__name__)
@@ -941,7 +941,7 @@ class AlPanelInterfaceHelper(AlPanelInterface):
 
     # get the current date and time
     def _getTimeFunction(self) -> datetime:
-        return datetime.now()
+        return datetime.now(timezone.utc).astimezone()
 
     # get the current date and time
     def _getUTCTimeFunction(self) -> datetime:
