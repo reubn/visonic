@@ -160,6 +160,7 @@ class AlPanelMode(AlEnum):
     DOWNLOAD = AlIntEnum(6)
     STOPPED = AlIntEnum(7)
     MINIMAL_ONLY = AlIntEnum(8)
+    POWERLINK_BRIDGED = AlIntEnum(9)
 #    COMPLETE_READONLY = AlIntEnum(9)
 a = AlPanelMode()
 
@@ -174,6 +175,7 @@ class AlPanelStatus(AlEnum):
     ARMED_AWAY = AlIntEnum(6)
     SPECIAL = AlIntEnum(7)
     DOWNLOADING = AlIntEnum(8)
+    INSTALLER = AlIntEnum(9)
 a = AlPanelStatus()
 
 # The set of commands that can be used to arm and disarm the panel
@@ -190,7 +192,6 @@ class AlPanelCommand(AlEnum):
     FIRE = AlIntEnum(7)
     EMERGENCY = AlIntEnum(8)
     PANIC = AlIntEnum(9)
-    CHANGE_BAUD = AlIntEnum(20)
 a = AlPanelCommand()
 
 # The set of commands that can be used to mute and trigger the siren
