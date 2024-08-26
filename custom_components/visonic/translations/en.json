@@ -44,8 +44,7 @@
                 "data": {
                     "exclude_x10": "X10 Devices to Exclude (comma separated)",
                     "exclude_sensor": "Sensor List to Exclude (comma separated)",
-                    "emulation_mode": "Emulation Mode",
-                    "language": "Language (EN, NL, FR)"
+                    "emulation_mode": "Emulation Mode"
                 }
             },
             "parameters2": {
@@ -63,14 +62,21 @@
                     "siren_sounding": "List of triggers for the siren",
                     "sensor_event_list": "List of Sensor changes to create an Event",
                     "panel_state_notifications": "List of triggers for Home Assistant Notifications",
-                    "motion_off_delay": "Motion/Camera off delay time (seconds)",
-                    "magnet_closed_delay": "Magnet/Wired closed delay time (seconds)",
-                    "emergency_off_delay": "Smoke/Fire off delay time (seconds)",
                     "retry_connection_count": "Try this number of times to attempt the connection",
                     "retry_connection_delay": "Time delay (seconds) between reconnection attempts"
                 }
             },
             "parameters11": {
+                "description": "",
+                "title": "Alarm Panel Zone/Sensor Settings",
+                "data": {
+                    "language": "Language (EN, NL, FR, Panel Language)",
+                    "motion_off_delay": "Motion/Camera off delay time (seconds)",
+                    "magnet_closed_delay": "Magnet/Wired closed delay time (seconds)",
+                    "emergency_off_delay": "Smoke/Fire off delay time (seconds)"
+                }
+            },
+            "parameters12": {
                 "description": "",
                 "title": "Alarm Panel Arm/Disarm Settings",
                 "data": {
@@ -85,7 +91,7 @@
                     "allow_sensor_bypass": "Allow each sensor to be bypassed"
                 }
             },
-            "parameters12": {
+            "parameters13": {
                 "description": "",
                 "title": "Alarm Panel Log File Settings",
                 "data": {
@@ -120,14 +126,21 @@
                     "siren_sounding": "List of triggers for the siren",
                     "sensor_event_list": "List of Sensor changes to create an Event",
                     "panel_state_notifications": "List of triggers for Home Assistant Notifications",
-                    "motion_off_delay": "Motion/Camera off delay time (seconds)",
-                    "magnet_closed_delay": "Magnet/Wired closed delay time (seconds)",
-                    "emergency_off_delay": "Smoke/Fire off delay time (seconds)",
                     "retry_connection_count": "Try this number of times to attempt the connection",
                     "retry_connection_delay": "Time delay (seconds) between reconnection attempts"
                 }
             },
             "parameters11": {
+                "description": "",
+                "title": "Alarm Panel Arm/Disarm Settings",
+                "data": {
+                    "language": "Language (EN, NL, FR, Panel Language)",
+                    "motion_off_delay": "Motion/Camera off delay time (seconds)",
+                    "magnet_closed_delay": "Magnet/Wired closed delay time (seconds)",
+                    "emergency_off_delay": "Smoke/Fire off delay time (seconds)"
+                }
+            },
+            "parameters12": {
                 "description": "",
                 "title": "Alarm Panel Arm/Disarm Settings",
                 "data": {
@@ -142,7 +155,7 @@
                     "allow_sensor_bypass": "Allow each sensor to be bypassed"
                 }
             },
-            "parameters12": {
+            "parameters13": {
                 "description": "",
                 "title": "Alarm Panel Log File Settings",
                 "data": {
@@ -243,6 +256,37 @@
             }
         }
     },
+    "entity": {
+  	    "alarm_control_panel": {
+	        "alarm_panel_key": {
+				"state_attributes": {
+					"lasteventname": {
+					    "name" : "last event name",
+						"state" : {
+							"System" : { "name" : "System - translated" },
+							"test_c" : { "name" : "three" },
+							"test_d" : "four"
+						}
+					},
+					"lasteventaction": { 
+					    "name" : "last event action",
+						"state" : {
+							"Installer Programming" : { "name" : "Installer Programming - translated" },
+							"test_c" : { "name" : "three" },
+							"test_d" : "four"
+						}
+					},
+					"lasteventtime": { 
+					    "name" : "last event time"
+					}
+				},
+				"state": {
+					"off": "off",
+					"on" : "on"
+				}
+	        }
+	    }
+	},
     "selector": {
         "command": {
             "options": {

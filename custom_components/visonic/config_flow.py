@@ -54,11 +54,11 @@ class MyHandlers(data_entry_flow.FlowHandler):
     def create_parameters_sequence(self, s : str) -> list:
         step_sequence = []
         if s == available_emulation_modes[0]:
-            step_sequence = [2,10,11,12]       
+            step_sequence = [2,10,11,12,13]       
         elif s == available_emulation_modes[1]:
-            step_sequence = [10,11] 
+            step_sequence = [10,11,12,13] 
         elif s == available_emulation_modes[2]:
-            step_sequence = [10] 
+            step_sequence = [10,11] 
         return step_sequence
 
     def combineSettings(self, entry):
@@ -104,6 +104,8 @@ class MyHandlers(data_entry_flow.FlowHandler):
             ds = self.myschema.create_schema_parameters11()
         elif step == "parameters12":
             ds = self.myschema.create_schema_parameters12()
+        elif step == "parameters13":
+            ds = self.myschema.create_schema_parameters13()
         else:
             return self.async_abort(reason="device_error")
 
@@ -146,6 +148,11 @@ class MyHandlers(data_entry_flow.FlowHandler):
     async def async_step_parameters12(self, user_input=None):
         """Config flow step 12."""
         #_LOGGER.debug(f"show_form step is 12 - {self.current_pos}")
+        return await self.gotonext(user_input)
+
+    async def async_step_parameters13(self, user_input=None):
+        """Config flow step 13."""
+        #_LOGGER.debug(f"show_form step is 13 - {self.current_pos}")
         return await self.gotonext(user_input)
 
     async def validate_input(self, data: dict):

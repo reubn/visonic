@@ -143,7 +143,7 @@ a = AlAlarmType()
 # the set of configuration parameters in to this client class
 class AlConfiguration(AlEnum):
     DownloadCode = AlIntEnum(0)           # 4 digit string or ""
-    PluginLanguage = AlIntEnum(3)         # String "EN", "FR", "NL"
+    PluginLanguage = AlIntEnum(3)         # String "EN", "FR", "NL", "Panel"
     SirenTriggerList = AlIntEnum(5)       # A list of strings
     ForceStandard = AlIntEnum(6)          # Boolean
     DisableAllCommands = AlIntEnum(11)    # Boolean
@@ -513,7 +513,7 @@ class AlPanelInterface(ABC):
         return False
 
     @abstractmethod
-    def getPanelLastEvent(self) -> (str, str):
+    def getPanelLastEvent(self) -> (str, str, str):
         """ Return the panels last event string """
         return ("", "")
 

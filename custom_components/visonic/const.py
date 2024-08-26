@@ -130,12 +130,13 @@ available_emulation_modes = [
 map_panel_status_to_ha_status = {
     AlPanelStatus.UNKNOWN     : STATE_UNKNOWN,
     AlPanelStatus.DISARMED    : STATE_ALARM_DISARMED,
-    AlPanelStatus.SPECIAL     : STATE_ALARM_DISARMED,
-    AlPanelStatus.DOWNLOADING : STATE_ALARM_DISARMED,
-    AlPanelStatus.ENTRY_DELAY : STATE_ALARM_PENDING,
     AlPanelStatus.ARMING_HOME : STATE_ALARM_ARMING,
     AlPanelStatus.ARMING_AWAY : STATE_ALARM_ARMING,
+    AlPanelStatus.ENTRY_DELAY : STATE_ALARM_PENDING,
     AlPanelStatus.ARMED_HOME  : STATE_ALARM_ARMED_HOME,
-    AlPanelStatus.ARMED_AWAY  : STATE_ALARM_ARMED_AWAY    
+    AlPanelStatus.ARMED_AWAY  : STATE_ALARM_ARMED_AWAY,
+    AlPanelStatus.SPECIAL     : STATE_UNKNOWN,
+    AlPanelStatus.DOWNLOADING : STATE_UNKNOWN,
+    AlPanelStatus.INSTALLER   : STATE_UNKNOWN
 }
 

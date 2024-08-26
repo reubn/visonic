@@ -54,7 +54,7 @@ class PrintMode(Enum):
 myconfig = { 
     CONF_DOWNLOAD_CODE: "",
     CONF_EMULATION_MODE: ConnectionMode.POWERLINK,
-    CONF_LANGUAGE: "EN",
+    CONF_LANGUAGE: "Panel",
     CONF_SIREN_SOUNDING: ["Intruder"]
 }
 
@@ -164,6 +164,11 @@ class MyTransport(AlTransport):
 
     def close(self):
         self.transport.close()
+
+# Convert byte array to a string of hex values
+def toString(array_alpha: bytearray, gap = " "):
+    return ("".join(("%02x"+gap) % b for b in array_alpha))[:-len(gap)] if len(gap) > 0 else ("".join("%02x" % b for b in array_alpha))
+
 
 class ClientVisonicProtocol(asyncio.Protocol, VisonicProtocol):
 
@@ -302,7 +307,7 @@ class VisonicClient:
             AlConfiguration.DownloadCode: self.config.get(CONF_DOWNLOAD_CODE, ""),
             AlConfiguration.ForceStandard: self.ForceStandardMode,
             AlConfiguration.DisableAllCommands: self.DisableAllCommands,
-            AlConfiguration.PluginLanguage: self.config.get(CONF_LANGUAGE, "EN"),
+            AlConfiguration.PluginLanguage: self.config.get(CONF_LANGUAGE, "Panel"),
             AlConfiguration.SirenTriggerList: self.config.get(CONF_SIREN_SOUNDING, ["Intruder"])
         }
 
@@ -529,7 +534,7 @@ class VisonicClient:
             self.visonicProtocol.updateSettings(self.__getConfigData())
         #print("[updateConfig] exit")
 
-    def getPanelLastEvent(self) -> (str, str):
+    def getPanelLastEvent(self) -> (str, str, str):
         """ Get Last Panel Event. """
         if self.visonicProtocol is not None:
             return self.visonicProtocol.getPanelLastEvent()

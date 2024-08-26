@@ -4,7 +4,7 @@ import logging
 from typing import Callable, Any
 import re
 import socket
-from datetime import datetime
+from datetime import datetime, timezone
 from jinja2 import Environment, FileSystemLoader
 from functools import partial
 import threading
@@ -120,7 +120,7 @@ from .const import (
 #    "trigger",
 #]
 
-CLIENT_VERSION = "0.9.7.4"
+CLIENT_VERSION = "0.9.7.5"
 
 MAX_CLIENT_LOG_ENTRIES = 300
 
@@ -316,21 +316,21 @@ class VisonicClient:
     def logstate_debug(self, msg, *args, **kwargs):
         s = "P" + str(self.getPanelID()) + "  " + (msg % args % kwargs)
         _LOGGER.debug(s)
-        self.strlog.append(str(datetime.now()) + "  D " + s)
+        self.strlog.append(str(datetime.now(timezone.utc).astimezone()) + "  D " + s)
         while len(self.strlog) > MAX_CLIENT_LOG_ENTRIES:
             self.strlog.pop(0)
             
     def logstate_info(self, msg, *args, **kwargs):
         s = "P" + str(self.getPanelID()) + "  " + (msg % args % kwargs)
         _LOGGER.info(" " + s)
-        self.strlog.append(str(datetime.now()) + "  I " + s)
+        self.strlog.append(str(datetime.now(timezone.utc).astimezone()) + "  I " + s)
         while len(self.strlog) > MAX_CLIENT_LOG_ENTRIES:
             self.strlog.pop(0)
 
     def logstate_warning(self, msg, *args, **kwargs):
         s = "P" + str(self.getPanelID()) + "  " + (msg % args % kwargs)
         _LOGGER.warning(s)
-        self.strlog.append(str(datetime.now()) + "  W " + s)
+        self.strlog.append(str(datetime.now(timezone.utc).astimezone()) + "  W " + s)
         while len(self.strlog) > MAX_CLIENT_LOG_ENTRIES:
             self.strlog.pop(0)
 

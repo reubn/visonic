@@ -2,6 +2,7 @@
 
 import logging
 import asyncio
+import re
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,6 +41,11 @@ _stype_to_ha_sensor_class = {
     AlSensorType.SOUND       : BinarySensorDeviceClass.SOUND
 }
 
+def capitalize(s):
+    return s[0].upper() + s[1:]
+
+def titlecase(s):
+    return re.sub(r"[A-Za-z]+('[A-Za-z]+)?", lambda word: capitalize(word.group(0)), s)
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -173,11 +179,17 @@ class VisonicBinarySensor(BinarySensorEntity):
     def device_info(self):
         """Return information about the device."""
         if self._visonic_device is not None:
+            t = self._visonic_device.getSensorType()
+            s = f"{t.name} Sensor"
             return {
                 "manufacturer": "Visonic",
                 "identifiers": {(DOMAIN, self._name)},
                 "name": f"Visonic Sensor ({self._dname})",
-                "model": self._visonic_device.getSensorModel(),
+                #"model": s.title() + f" ({self._visonic_device.getSensorModel()})",
+                "model": s.title(),
+                "model_id": self._visonic_device.getSensorModel(),
+#                "translation_key" : "trans_attr",
+                #"battery": 1 if self._visonic_device.isLowBattery else 100
             }
         return { 
                  "manufacturer": "Visonic", 
@@ -231,7 +243,7 @@ class VisonicBinarySensor(BinarySensorEntity):
                 attr["zone open"] = "Yes" if self._visonic_device.isOpen() else "No"
             
             if stype != AlSensorType.UNKNOWN:
-                attr["sensor type"] = str(stype)
+                attr["sensor type"] = titlecase(str(stype).lower())
             elif self._visonic_device.getRawSensorIdentifier() is not None:
                 attr["sensor type"] = "Undefined " + str(self._visonic_device.getRawSensorIdentifier())
             else:

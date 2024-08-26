@@ -98,6 +98,28 @@ pmPanelTroubleType_t = {
 def toString(array_alpha: bytearray, gap = " "):
     return ("".join(("%02x"+gap) % b for b in array_alpha))[:-len(gap)] if len(gap) > 0 else ("".join("%02x" % b for b in array_alpha))
 
+
+def toBool(val) -> bool:
+    if type(val) == bool:
+        return val
+    elif type(val) == int:
+        return val != 0
+    elif type(val) == str:
+        v = val.lower()
+        return not (v == "no" or v == "false" or v == "0")
+    #print("Visonic unable to decode boolean value {val}    type is {type(val)}")
+    return False
+
+def capitalize(s):
+    return s[0].upper() + s[1:]
+
+def titlecase(s):
+    return re.sub(r"[A-Za-z]+('[A-Za-z]+)?", lambda word: capitalize(word.group(0)), s)
+
+# get the current date and time
+def getTimeFunction() -> datetime:
+    return datetime.now(timezone.utc).astimezone()
+
 class vloggerclass:
     def __init__(self, loggy, panel_id : int = -1, detail : bool = False):
         self.detail = detail
@@ -150,28 +172,6 @@ class vloggerclass:
 log = mylog
 #log = vloggerclass(mylog, 0, False)
 
-def toBool(val) -> bool:
-    if type(val) == bool:
-        return val
-    elif type(val) == int:
-        return val != 0
-    elif type(val) == str:
-        v = val.lower()
-        return not (v == "no" or v == "false" or v == "0")
-    #print("Visonic unable to decode boolean value {val}    type is {type(val)}")
-    return False
-
-def capitalize(s):
-    return s[0].upper() + s[1:]
-
-def titlecase(s):
-    return re.sub(r"[A-Za-z]+('[A-Za-z]+)?", lambda word: capitalize(word.group(0)), s)
-
-# get the current date and time
-def getTimeFunction() -> datetime:
-    return datetime.now()
-
-
 class AlSensorDeviceHelper(AlSensorDevice):
 
     def __init__(self, **kwargs):
@@ -183,6 +183,7 @@ class AlSensorDeviceHelper(AlSensorDevice):
         self.ztype = kwargs.get("ztype", 0)  # int   zone type
         self.zname = kwargs.get("zname", "Unknown")  # str   zone name
         self.zchime = kwargs.get("zchime", "Unknown")  # str   zone chime
+        self.zchimeref = kwargs.get("zchimeref", 0)  # set   partition set (could be in more than one partition)
         self.partition = kwargs.get("partition", 0)  # set   partition set (could be in more than one partition)
         self.bypass = kwargs.get("bypass", False)  # bool  if bypass is set on this sensor
         self.lowbatt = kwargs.get("lowbatt", False)  # bool  if this sensor has a low battery
@@ -220,7 +221,7 @@ class AlSensorDeviceHelper(AlSensorDevice):
         strn = strn + (" ztypeName=None" if self.ztypeName == None else " ztypeName={0:<10}".format(self.ztypeName[:10]))
         strn = strn + (" ztamper=None" if self.ztamper == None else " ztamper={0:<2}".format(self.ztamper))
         strn = strn + (" ztrip=None" if self.ztrip == None else " ztrip={0:<2}".format(self.ztrip))
-        # temporarily miss it out to shorten the line in debug messages        strn = strn + (" zchime=None"    if self.zchime == None else    " zchime={0:<12}".format(self.zchime, type(self.zchime)))
+        strn = strn + (" zchime=None" if self.zchime == None else    " zchime={0:<16}".format(self.zchime, type(self.zchime)))
         # temporarily miss it out to shorten the line in debug messages        strn = strn + (" partition=None" if self.partition == None else " partition={0}".format(self.partition, type(self.partition)))
         strn = strn + (" bypass=None" if self.bypass == None else " bypass={0:<2}".format(self.bypass))
         strn = strn + (" lowbatt=None" if self.lowbatt == None else " lowbatt={0:<2}".format(self.lowbatt))
@@ -829,7 +830,8 @@ class AlPanelInterfaceHelper(AlPanelInterface):
 
         self.PanelAlarmStatus = AlAlarmType.NONE
         self.PanelTroubleStatus = AlTroubleType.NONE
-        self.PanelLastEvent = "Startup/Startup"
+        self.PanelLastEventName = "Startup"
+        self.PanelLastEventAction = "Startup"
         self.PanelLastEventTime = self._getTimeFunction().strftime("%d/%m/%Y, %H:%M:%S")
         self.PanelStatusText = "Unknown"
         self.LastPanelEventData = {}
@@ -856,7 +858,7 @@ class AlPanelInterfaceHelper(AlPanelInterface):
                 log.debug("     key {0:<2} X10    {1}".format(key, device))
         
         log.debug("   Model {: <18}     PowerMaster {: <18}     LastEvent {: <18}     Ready   {: <13}".format(self.PanelModel,
-                                        'Yes' if self.PowerMaster else 'No', self.getPanelLastEvent()[0], 'Yes' if self.PanelReady else 'No'))
+                                        'Yes' if self.PowerMaster else 'No', self.PanelLastEventName + "/" + self.PanelLastEventAction, 'Yes' if self.PanelReady else 'No'))
         pm = titlecase(self.PanelMode.name.replace("_"," ")) # str(AlPanelMode()[self.PanelMode]).replace("_"," ")
         ts = titlecase(self.PanelTroubleStatus.name.replace("_"," ")) # str(AlTroubleType()[self.PanelTroubleStatus]).replace("_"," ")
         al = titlecase(self.PanelAlarmStatus.name.replace("_"," ")) # str(AlAlarmType()[self.PanelAlarmStatus]).replace("_"," ")
@@ -903,8 +905,8 @@ class AlPanelInterfaceHelper(AlPanelInterface):
             return self.PanelBypass
         return False
 
-    def getPanelLastEvent(self) -> (str, str):
-        return (self.PanelLastEvent, self.PanelLastEventTime)
+    def getPanelLastEvent(self) -> (str, str, str):
+        return (self.PanelLastEventName, self.PanelLastEventAction, self.PanelLastEventTime)
 
     def requestPanelCommand(self, state : AlPanelCommand, code : str = "") -> AlCommandStatus:
         """ Send a request to the panel to Arm/Disarm """
@@ -962,7 +964,8 @@ class AlPanelInterfaceHelper(AlPanelInterface):
         self.LastPanelEventData = datadict
 
         if count > 0:
-            self.PanelLastEvent = name[count-1] + "/" + zonemode[count-1]
+            self.PanelLastEventName = name[count-1]
+            self.PanelLastEventAction = zonemode[count-1]
             self.PanelLastEventTime = self._getTimeFunction().strftime("%d/%m/%Y, %H:%M:%S")
             for i in range(0, count):
                 a = {}
@@ -985,7 +988,9 @@ class AlPanelInterfaceHelper(AlPanelInterface):
         datadict["bypass"] = self.PanelBypass
         datadict["alarm"] = titlecase(self.PanelAlarmStatus.name.replace("_"," ").lower())
         datadict["trouble"] = titlecase(self.PanelTroubleStatus.name.replace("_"," ").lower())
-        datadict["lastevent"] = titlecase(self.PanelLastEvent.replace("_"," ").lower())
+        datadict["lastevent"] = titlecase((self.PanelLastEventName + "/" + self.PanelLastEventAction).replace("_"," ").lower())
+        datadict["lasteventname"] = titlecase(self.PanelLastEventName.replace("_"," ").lower())
+        datadict["lasteventaction"] = titlecase(self.PanelLastEventAction.replace("_"," ").lower())
         datadict["lasteventtime"] = self.PanelLastEventTime
         return datadict
 

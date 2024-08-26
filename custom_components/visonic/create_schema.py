@@ -159,9 +159,6 @@ class VisonicSchema:
         """Create parameter set 1."""
         # Panel settings - can only be set on creation
         return {
-            vol.Required(
-                CONF_LANGUAGE, default=self.create_default(options, CONF_LANGUAGE, "EN")
-            ): vol.In(["EN", "FR", "NL"]),
             vol.Optional(
                 CONF_EXCLUDE_SENSOR,
                 default=self.create_default(options, CONF_EXCLUDE_SENSOR, ""),
@@ -209,18 +206,6 @@ class VisonicSchema:
         #_LOGGER.debug(f"create_parameters10 {strlist=}")
         return {
             vol.Optional(
-                CONF_MOTION_OFF_DELAY,
-                default=self.create_default(options, CONF_MOTION_OFF_DELAY, 120),
-            ): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=3000, mode=selector.NumberSelectorMode.BOX)),
-            vol.Optional(
-                CONF_MAGNET_CLOSED_DELAY,
-                default=self.create_default(options, CONF_MAGNET_CLOSED_DELAY, 5),
-            ): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=3000, mode=selector.NumberSelectorMode.BOX)),
-            vol.Optional(
-                CONF_EMER_OFF_DELAY,
-                default=self.create_default(options, CONF_EMER_OFF_DELAY, 120),
-            ): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=3000, mode=selector.NumberSelectorMode.BOX)),
-            vol.Optional(
                 CONF_SIREN_SOUNDING, 
                 default=self.create_default(options, CONF_SIREN_SOUNDING, ["intruder"]),
             ): selector.SelectSelector(selector.SelectSelectorConfig(options=available_siren_values, multiple=True, sort=True, translation_key=CONF_SIREN_SOUNDING)),
@@ -246,6 +231,27 @@ class VisonicSchema:
 
     def create_parameters11(self, options: dict):
         """Create parameter set 11."""
+        # Panel settings - can be modified/edited
+        return {
+            vol.Required(
+                CONF_LANGUAGE, default=self.create_default(options, CONF_LANGUAGE, "EN")
+            ): vol.In(["EN", "FR", "NL", "Panel"]),
+            vol.Optional(
+                CONF_MOTION_OFF_DELAY,
+                default=self.create_default(options, CONF_MOTION_OFF_DELAY, 120),
+            ): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=3000, mode=selector.NumberSelectorMode.BOX)),
+            vol.Optional(
+                CONF_MAGNET_CLOSED_DELAY,
+                default=self.create_default(options, CONF_MAGNET_CLOSED_DELAY, 5),
+            ): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=3000, mode=selector.NumberSelectorMode.BOX)),
+            vol.Optional(
+                CONF_EMER_OFF_DELAY,
+                default=self.create_default(options, CONF_EMER_OFF_DELAY, 120),
+            ): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=3000, mode=selector.NumberSelectorMode.BOX)),
+        }
+
+    def create_parameters12(self, options: dict):
+        """Create parameter set 12."""
         # Panel settings - can be modified/edited
         return {
             vol.Optional(
@@ -285,8 +291,8 @@ class VisonicSchema:
             ): bool,
         }
 
-    def create_parameters12(self, options: dict):
-        """Create parameter set 12."""
+    def create_parameters13(self, options: dict):
+        """Create parameter set 13."""
         # Log file parameters
         return {
             vol.Optional(
@@ -347,6 +353,10 @@ class VisonicSchema:
     def create_schema_parameters12(self):
         """Create schema parameters 12."""
         return vol.Schema(self.create_parameters12(self.options))
+
+    def create_schema_parameters13(self):
+        """Create schema parameters 13."""
+        return vol.Schema(self.create_parameters13(self.options))
 
     def set_default_options(self, options: dict):
         """Set schema defaults."""
