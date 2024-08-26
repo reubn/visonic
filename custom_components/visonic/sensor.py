@@ -60,6 +60,9 @@ async def async_setup_entry(
 class VisonicSensor(Entity):
     """Representation of a Visonic alarm control panel as a simple sensor for minimal."""
 
+    _attr_translation_key: str = "alarm_panel_key"
+    _attr_has_entity_name = True
+
     def __init__(self, hass: HomeAssistant, client: VisonicClient, partition_id: int):
         """Initialize a Visonic security alarm."""
         self._client = client

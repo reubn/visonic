@@ -105,7 +105,7 @@ except:
     from pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, pmPanelTroubleType_t, pmPanelAlarmType_t, AlPanelInterfaceHelper, 
                           AlSensorDeviceHelper, AlSwitchDeviceHelper)
 
-PLUGIN_VERSION = "1.4.1.0"
+PLUGIN_VERSION = "1.4.1.1"
 
 # Obfuscate sensitive data, regardless of the other Debug settings.
 #     Setting this to True limits the logging of messages sent to the panel to CMD or NONE
@@ -496,9 +496,7 @@ S.TST TRBL RSTR, CNFRM PANIC, , SOAK T. FAIL, SOAK T. FAIL,
 SOAK T. FAIL, , , , , , , , , 
 """
 
-# Log Events
-pmLogEvent_t = {
-   "EN" : (
+pmZoneName_t_EN = (
            "None",
            # 1
            "Interior Alarm", "Perimeter Alarm", "Delay Alarm", "24h Silent Alarm", "24h Audible Alarm",
@@ -544,7 +542,11 @@ pmLogEvent_t = {
            "n/a", "n/a", "n/a", "n/a", "n/a",
            "n/a", "n/a", "n/a", "n/a", "n/a",
            "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a"),
+           "n/a" )
+
+# Log Events
+pmLogEvent_t = {
+   "EN" : pmZoneName_t_EN,
    "NL" : (
            "Geen",
            # 1
@@ -637,53 +639,7 @@ pmLogEvent_t = {
            "n/a", "n/a", "n/a", "n/a", "n/a",
            "n/a", "n/a", "n/a", "n/a", "n/a",
            "n/a"),
-   "Panel" : (
-           "None",
-           # 1
-           "Interior Alarm", "Perimeter Alarm", "Delay Alarm", "24h Silent Alarm", "24h Audible Alarm",
-           "Tamper", "Control Panel Tamper", "Tamper Alarm", "Tamper Alarm", "Communication Loss",
-           "Panic From Keyfob", "Panic From Control Panel", "Duress", "Confirm Alarm", "General Trouble",
-           "General Trouble Restore", "Interior Restore", "Perimeter Restore", "Delay Restore", "24h Silent Restore",
-           # 21
-           "24h Audible Restore", "Tamper Restore", "Control Panel Tamper Restore", "Tamper Restore", "Tamper Restore",
-           "Communication Restore", "Cancel Alarm", "General Restore", "Trouble Restore", "Not used",
-           "Recent Close", "Fire", "Fire Restore", "Not Active", "Emergency",
-           "Remove User", "Disarm Latchkey", "Confirm Alarm Emergency", "Supervision (Inactive)", "Supervision Restore (Active)",
-           "Low Battery", "Low Battery Restore", "AC Fail", "AC Restore", "Control Panel Low Battery",
-           "Control Panel Low Battery Restore", "RF Jamming", "RF Jamming Restore", "Communications Failure", "Communications Restore",
-           # 51
-           "Telephone Line Failure", "Telephone Line Restore", "Auto Test", "Fuse Failure", "Fuse Restore",
-           "Keyfob Low Battery", "Keyfob Low Battery Restore", "Engineer Reset", "Battery Disconnect", "1-Way Keypad Low Battery",
-           "1-Way Keypad Low Battery Restore", "1-Way Keypad Inactive", "1-Way Keypad Restore Active", "Low Battery Ack", "Clean Me",
-           "Fire Trouble", "Low Battery", "Battery Restore", "AC Fail", "AC Restore",
-           "Supervision (Inactive)", "Supervision Restore (Active)", "Gas Alert", "Gas Alert Restore", "Gas Trouble",
-           "Gas Trouble Restore", "Flood Alert", "Flood Alert Restore", "X-10 Trouble", "X-10 Trouble Restore",
-           # 81
-           "Arm Home", "Arm Away", "Quick Arm Home", "Quick Arm Away", "Disarm",
-           "Fail To Auto-Arm", "Enter To Test Mode", "Exit From Test Mode", "Force Arm", "Auto Arm",
-           "Instant Arm", "Bypass", "Fail To Arm", "Door Open", "Communication Established By Control Panel",
-           "System Reset", "Installer Programming", "Wrong Password", "Not Sys Event", "Not Sys Event",
-           # 101
-           "Extreme Hot Alert", "Extreme Hot Alert Restore", "Freeze Alert", "Freeze Alert Restore", "Human Cold Alert",
-           "Human Cold Alert Restore", "Human Hot Alert", "Human Hot Alert Restore", "Temperature Sensor Trouble", "Temperature Sensor Trouble Restore",
-
-           # New values for PowerMaster and models with partitions
-           "PIR Mask", "PIR Mask Restore", "Repeater low battery", "Repeater low battery restore", "Repeater inactive",
-           "Repeater inactive restore", "Repeater tamper", "Repeater tamper restore", "Siren test end", "Devices test end",
-           # 121
-           "One way comm. trouble", "One way comm. trouble restore", "Sensor outdoor alarm", "Sensor outdoor restore", "Guard sensor alarmed",
-           "Guard sensor alarmed restore", "Date time change", "System shutdown", "System power up", "Missed Reminder",
-           "Pendant test fail", "Basic KP inactive", "Basic KP inactive restore", "Basic KP tamper", "Basic KP tamper Restore",
-           "Heat", "Heat restore", "LE Heat Trouble", "CO alarm", "CO alarm restore",
-           # 141
-           "CO trouble", "CO trouble restore", "Exit Installer", "Enter Installer", "Self test trouble",
-           "Self test restore", "Confirm panic event", "n/a", "Soak test fail", "Fire Soak test fail",
-           "Gas Soak test fail", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a")
+   "Panel" : pmZoneName_t_EN
 }
 
 # TODO:  Populate the 2 "stop" columns by using pmPanelConfig_t
@@ -1125,34 +1081,6 @@ for blk in pmBlockDownload_Short:
    # "0F92" : "PowerMaster33 15_146"
 # }
 
-##############################################################################################################################################################################################################################################
-##########################  Detailed Zone Type Decode  #######################################################################################################################################################################################
-##############################################################################################################################################################################################################################################
-
-# MyPowerMax    ['Non-Alarm', 'Emergency', 'Flood', 'Gas', 'Delay 1', 'Delay 2', 'Inter-Follow', 'Perimeter', 'Perim-Follow', '24H Silent', '24H Audible', 'Fire', 'Interior', 'Home Delay', 'Temperature', 'Arming Key']
-
-pmZoneType_t = {
-   "EN" : [
-           "Non-Alarm", "Emergency", "Flood", "Gas", "Delay 1", "Delay 2", "Interior-Follow", "Perimeter", "Perimeter-Follow",
-           "24 Hours Silent", "24 Hours Audible", "Fire", "Interior", "Home Delay", "Temperature", "Outdoor", "16" ],
-   "NL" : [
-           "Geen alarm", "Noodtoestand", "Water", "Gas", "Vertraagd 1", "Vertraagd 2", "Interieur volg", "Omtrek", "Omtrek volg",
-           "24 uurs stil", "24 uurs luid", "Brand", "Interieur", "Thuis vertraagd", "Temperatuur", "Buiten", "16" ],
-   "FR" : [
-           "Non Alarme", "Urgence", "Inondation", "Gaz", "Temporisée 1", "Temporisée 2", "Interior-Follow", "Voie Périphérique", "Voie Périphérique d'Entrée",
-           "24 Heures Silencieuse", "24 Heures Audible", "Incendie", "Intérieure", "Home Delay", "Température", "Extérieure", "16" ],
-   "Panel" : []        
-} # "Arming Key", "Guard" ??
-
-# MyPowerMax    ['Chime OFF', 'Melody-Chime', 'Zone Name-Chime']
-
-pmZoneChime_t = {
-   "EN" : ("Chime OFF", "Melody-Chime", "Zone Name-Chime"),
-   "NL" : ("Uit", "Muziek", "Zone"),
-   "FR" : ("Eteint", "Melodie", "Zone"),
-   "Panel" : []        
-}
-
 # Note: names need to match to VAR_xxx
 pmZoneSensorMaxGeneric_t = {
    0x0 : AlSensorType.VIBRATION, 0x2 : AlSensorType.SHOCK, 0x3 : AlSensorType.MOTION, 0x4 : AlSensorType.MOTION, 0x5 : AlSensorType.MAGNET,
@@ -1253,8 +1181,8 @@ pmZoneSensorMaster_t = {
 PanelArmedStatusCollection = collections.namedtuple('PanelArmedStatusCollection', 'disarmed armed state')
 PanelArmedStatus = {
    0x00 : PanelArmedStatusCollection(  True, False, AlPanelStatus.DISARMED ),      # Disarmed
-   0x01 : PanelArmedStatusCollection( False, False, AlPanelStatus.ARMING_HOME ),   # Arming Home
-   0x02 : PanelArmedStatusCollection( False, False, AlPanelStatus.ARMING_AWAY ),   # Arming Away
+   0x01 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_HOME ),   # Arming Home
+   0x02 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_AWAY ),   # Arming Away
    0x03 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ENTRY_DELAY ),   # Entry Delay
    0x04 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_HOME ),    # Armed Home
    0x05 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_AWAY ),    # Armed Away
@@ -1406,6 +1334,36 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
 
     log.debug("Initialising Protocol - Protocol Version {0}".format(PLUGIN_VERSION))
 
+    ##############################################################################################################################################################################################################################################
+    ##########################  Detailed Zone Type Decode  #######################################################################################################################################################################################
+    ##############################################################################################################################################################################################################################################
+
+    # MyPowerMax    ['Non-Alarm', 'Emergency', 'Flood', 'Gas', 'Delay 1', 'Delay 2', 'Inter-Follow', 'Perimeter', 'Perim-Follow', '24H Silent', '24H Audible', 'Fire', 'Interior', 'Home Delay', 'Temperature', 'Arming Key']
+
+    pmZoneType_t_EN = [
+               "Non-Alarm", "Emergency", "Flood", "Gas", "Delay 1", "Delay 2", "Interior-Follow", "Perimeter", "Perimeter-Follow",
+               "24 Hours Silent", "24 Hours Audible", "Fire", "Interior", "Home Delay", "Temperature", "Outdoor", "16" ]
+    pmZoneType_t = {
+       "EN" : pmZoneType_t_EN,
+       "NL" : [
+               "Geen alarm", "Noodtoestand", "Water", "Gas", "Vertraagd 1", "Vertraagd 2", "Interieur volg", "Omtrek", "Omtrek volg",
+               "24 uurs stil", "24 uurs luid", "Brand", "Interieur", "Thuis vertraagd", "Temperatuur", "Buiten", "16" ],
+       "FR" : [
+               "Non Alarme", "Urgence", "Inondation", "Gaz", "Temporisée 1", "Temporisée 2", "Interior-Follow", "Voie Périphérique", "Voie Périphérique d'Entrée",
+               "24 Heures Silencieuse", "24 Heures Audible", "Incendie", "Intérieure", "Home Delay", "Température", "Extérieure", "16" ],
+       "Panel" : pmZoneType_t_EN       
+    } # "Arming Key", "Guard" ??
+
+    # MyPowerMax    ['Chime OFF', 'Melody-Chime', 'Zone Name-Chime']
+
+    pmZoneChime_t_EN = ("Chime OFF", "Melody-Chime", "Zone Name-Chime")
+    pmZoneChime_t = {
+       "EN" : pmZoneChime_t_EN,
+       "NL" : ("Uit", "Muziek", "Zone"),
+       "FR" : ("Eteint", "Melodie", "Zone"),
+       "Panel" : pmZoneChime_t_EN        
+    }
+
     def __init__(self, loop=None, panelConfig : PanelConfig = None, panel_id : int = None, packet_callback: Callable = None) -> None:
         super().__init__(panel_id=panel_id)
         """Initialize class."""
@@ -1415,6 +1373,10 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         else:
             self.loop = asyncio.get_event_loop()
             log.debug("Establishing Protocol - Using Asyncio Event Loop")
+
+        # I think these bring them in to the instance attribute of the class and out of the class attribute scope
+        self.pmZoneType_t["Panel"] = self.pmZoneType_t_EN
+        self.pmZoneChime_t["Panel"] = self.pmZoneChime_t_EN
 
         # install the packet callback handler
         self.packet_callback = packet_callback
@@ -2010,7 +1972,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                 self._emptySendQueue()
             else:
                 _resetPanelInterface()
-            self._addMessageToSendList("MSG_BYPASSTAT")
+            self._addMessageToSendList("MSG_STATUS_SEN")
 
         def StopAndSuspend(t : str):
             self.shutdownOperation()
@@ -3233,8 +3195,8 @@ class PacketHandling(ProtocolBase):
         for sensor in range(0, 64):
             # if the sensor is enrolled
             if sensor in self.SensorList:
-                self.SensorList[sensor].ztypeName = pmZoneType_t[self.pmLang][self.SensorList[sensor].ztype]
-                self.SensorList[sensor].zchime = pmZoneChime_t[self.pmLang][self.SensorList[sensor].zchimeref]
+                self.SensorList[sensor].ztypeName = self.pmZoneType_t[self.pmLang][self.SensorList[sensor].ztype]
+                self.SensorList[sensor].zchime = self.pmZoneChime_t[self.pmLang][self.SensorList[sensor].zchimeref]
                 self.SensorList[sensor].pushChange(AlSensorCondition.RESET)
 
 
@@ -3303,12 +3265,12 @@ class PacketHandling(ProtocolBase):
             retval = sensorType
 
         if zoneChime is not None and 0 <= zoneChime <= 2:
-            log.debug(f"Setting Zone Chime {self.pmLang}  {zoneChime}  {pmZoneChime_t[self.pmLang][zoneChime]}")
+            log.debug(f"Setting Zone Chime {self.pmLang}  {zoneChime}  {self.pmZoneChime_t[self.pmLang][zoneChime]}")
             self.PanelSettings[PanelSetting.ZoneChime][i] = zoneChime
-            if self.SensorList[i].zchime != pmZoneChime_t[self.pmLang][zoneChime]:
+            if self.SensorList[i].zchime != self.pmZoneChime_t[self.pmLang][zoneChime]:
                 updated = True
                 self.SensorList[i].zchimeref = zoneChime
-                self.SensorList[i].zchime = pmZoneChime_t[self.pmLang][zoneChime]
+                self.SensorList[i].zchime = self.pmZoneChime_t[self.pmLang][zoneChime]
 
         if zoneType is not None:
             self.PanelSettings[PanelSetting.ZoneTypes][i] = zoneType
@@ -3320,7 +3282,7 @@ class PacketHandling(ProtocolBase):
         if zoneType is not None and self.SensorList[i].ztype != zoneType:
             updated = True
             self.SensorList[i].ztype = zoneType
-            self.SensorList[i].ztypeName = pmZoneType_t[self.pmLang][zoneType]
+            self.SensorList[i].ztypeName = self.pmZoneType_t[self.pmLang][zoneType]
 
         if motiondelaytime is not None and motiondelaytime != 0xFFFF:
             if self.SensorList[i].motiondelaytime != motiondelaytime:
@@ -3352,7 +3314,7 @@ class PacketHandling(ProtocolBase):
             self.SensorList[i].pushChange(AlSensorCondition.RESET)
 
 #        log.debug("[_updateSensor]      Z{0:0>2} :  sensor_type={1:0>2}   zoneInfo={2:0>2}   ZTypeName={3}   Chime={4}   SensorType={5}   zoneName={6}".format(
-#               i+1, hex(sensor_type).upper(), hex(zoneInfo).upper(), pmZoneType_t["EN"][zoneType], pmZoneChime_t["EN"][zoneChime], sensorType, zoneName))
+#               i+1, hex(sensor_type).upper(), hex(zoneInfo).upper(), self.pmZoneType_t["EN"][zoneType], pmZoneChime_t["EN"][zoneChime], sensorType, zoneName))
         return retval
     
     def _processKeypadsAndSirens(self, pmPanelTypeNr) -> str:
@@ -3471,7 +3433,7 @@ class PacketHandling(ProtocolBase):
         return False
 
 
-    def processMultiplexList(self, ref_array, str_array) -> list:
+    def processMultiplexList(self, ref_array, str_array, msg = "") -> list:
         # first confirm that both arrays are formatted correctly and that the ref_array contains 0 to len(ref_array)
         def findrefpos(i):
             for p in range (0,len(ref_array)):   # 0 to len(ref_array)
@@ -3479,12 +3441,14 @@ class PacketHandling(ProtocolBase):
                     return p
             return None
         
+        log.debug(f"[Process Settings] Visonic Multiplex Reference input ref {ref_array}")
+        log.debug(f"[Process Settings] Visonic Multiplex Reference input str {str_array}")
         str_array_updated = []
         if len(ref_array) == len(str_array):
             for i in range (0,len(ref_array)):   # 0 to len(ref_array)
                 if i not in ref_array:
-                    log.warning(f"Lookup of Visonic Zone Type Reference Invalid, {i} is not in the array")
-                    return
+                    log.debug(f"Lookup of Visonic {msg} Reference Invalid, {i} is not in the array")
+                    return None
                 # redo the string array to miss off the number, dot
                 str_array_updated.append(str_array[i].strip(punctuation).strip())
         # By here we assume that the arrays are OK and that str_array_updated contains valid strings. 
@@ -3494,7 +3458,7 @@ class PacketHandling(ProtocolBase):
             ref = findrefpos(i)
             retval.append(titlecase(str_array_updated[ref]))
 
-        log.debug(f"[Process Settings] Visonic Multiplex Reference {retval}")
+        log.debug(f"[Process Settings] Visonic Multiplex Reference output {retval}")
         return retval
 
     # _processEPROMSettings
@@ -3561,13 +3525,20 @@ class PacketHandling(ProtocolBase):
                     
 
             # Process the Zone Type from the EPROM and determine whether we can add to pmZoneType_t to create a pmZoneType_t["Panel"]
-#            if self.pmLang == "Panel":
             if self.isPowerMaster(): # PowerMaster models
-                pmZoneType_t["Panel"]  = self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneStrType2S"]), self._lookupEprom(DecodePanelSettings["ZoneStrType1S"]))
-                pmZoneChime_t["Panel"] = self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneChimeType2S"]), self._lookupEprom(DecodePanelSettings["ZoneChimeType1S"]))
+                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneStrType2S"]), self._lookupEprom(DecodePanelSettings["ZoneStrType1S"]), msg = "Zone Type") ) is not None:
+                    self.pmZoneType_t["Panel"] = l
+                    log.debug(f"[Process Settings]    Successfully updated PowerMaster Zone Type [Panel] from EPROM")
+                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneChimeType2S"]), self._lookupEprom(DecodePanelSettings["ZoneChimeType1S"]), msg = "Chime Type") ) is not None:
+                    self.pmZoneChime_t["Panel"] = l
+                    log.debug(f"[Process Settings]    Successfully updated PowerMaster Chime Type [Panel] from EPROM")
             else:
-                pmZoneType_t["Panel"]  = self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneStrType2X"]), self._lookupEprom(DecodePanelSettings["ZoneStrType1X"]))
-                pmZoneChime_t["Panel"] = self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneChimeType2X"]), self._lookupEprom(DecodePanelSettings["ZoneChimeType1X"]))
+                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneStrType2X"]), self._lookupEprom(DecodePanelSettings["ZoneStrType1X"]), msg = "Zone Type") ) is not None:
+                    self.pmZoneType_t["Panel"] = l
+                    log.debug(f"[Process Settings]    Successfully updated PowerMax Zone Type [Panel] from EPROM")
+                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneChimeType2X"]), self._lookupEprom(DecodePanelSettings["ZoneChimeType1X"]), msg = "Chime Type") ) is not None:
+                    self.pmZoneChime_t["Panel"] = l
+                    log.debug(f"[Process Settings]    Successfully updated PowerMax Chime Type [Panel] from EPROM")
 
             log.debug(f"[Process Settings]    UpdatePanelSettings")
             # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3583,7 +3554,7 @@ class PacketHandling(ProtocolBase):
 
             # ------------------------------------------------------------------------------------------------------------------------------------------------
             # Process panel type and serial
-            pmPanelTypeCodeStr = self.PanelSettings[PanelSetting.PanelModel]  #     self._lookupEpromSingle("panelModelCode")
+            pmPanelTypeCodeStr = self.PanelSettings[PanelSetting.PanelModel]      # self._lookupEpromSingle("panelModelCode")
             idx = "{0:0>2}{1:0>2}".format(hex(self.PanelType).upper()[2:], hex(int(pmPanelTypeCodeStr)).upper()[2:])
             #pmPanelName = pmPanelName_t[idx] if idx in pmPanelName_t else "Unknown_" + idx
 
@@ -4147,7 +4118,7 @@ class PacketHandling(ProtocolBase):
         if self.PanelMode == AlPanelMode.DOWNLOAD:
             self.PanelState = AlPanelStatus.DOWNLOADING  # Downloading
 
-        #log.debug(f"[ProcessPanelStateUpdate]      log: {sarm_detail}, {disarmed=}  {armed=}")
+        log.debug(f"[ProcessPanelStateUpdate]  {sysStatus=}    log: {self.PanelState.name}, {disarmed=}  {armed=}")
 
         self.PanelReady = sysFlags & 0x01 != 0
         self.PanelAlertInMemory = sysFlags & 0x02 != 0
@@ -4332,7 +4303,7 @@ class PacketHandling(ProtocolBase):
         for i in range(0, 8):
             # Save the Zone Type
             self.PanelSettings[PanelSetting.ZoneTypes][offset+i] = ((int(data[2+i])) - 0x1E) & 0x0F
-            log.debug("                        Zone type for sensor {0} is {1} : {2}".format( offset+i+1, (int(data[2+i])) - 0x1E, pmZoneType_t["EN"][self.PanelSettings[PanelSetting.ZoneTypes][offset+i]] ))
+            log.debug("                        Zone type for sensor {0} is {1} : {2}".format( offset+i+1, (int(data[2+i])) - 0x1E, self.pmZoneType_t["EN"][self.PanelSettings[PanelSetting.ZoneTypes][offset+i]] ))
             if self.PanelMode != AlPanelMode.POWERLINK and (offset+i) in self.SensorList:
                 self._updateSensor(offset+i, zoneType = self.PanelSettings[PanelSetting.ZoneTypes][offset+i])
 
@@ -5240,7 +5211,7 @@ class VisonicProtocol(PacketHandling):
                     # Retrieve the code to send to the panel
                     armCode.append(pmArmMode_t[state])
                     self._addMessageToSendList("MSG_ARM", immediate = True, options=[ [3, armCode], [4, bpin] ])  #
-                    self._addMessageToSendList("MSG_BYPASSTAT")
+                    self._addMessageToSendList("MSG_STATUS_SEN", immediate = True)
                     return AlCommandStatus.SUCCESS
                 elif state == AlPanelCommand.MUTE:
                     self._addMessageToSendList("MSG_MUTE_SIREN", immediate = True, options=[ [4, bpin] ])  #
@@ -5271,7 +5242,7 @@ class VisonicProtocol(PacketHandling):
                     if state in pmX10State_t:
                         what = pmX10State_t[state]
                         self._addMessageToSendList("MSG_X10PGM", immediate = True, options=[ [6, what], [7, byteA], [8, byteB] ])
-                        self._addMessageToSendList("MSG_BYPASSTAT")
+                        self._addMessageToSendList("MSG_STATUS_SEN", immediate = True)
                         return AlCommandStatus.SUCCESS
                     return AlCommandStatus.FAIL_INVALID_STATE
             return AlCommandStatus.FAIL_X10_PROBLEM

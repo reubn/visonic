@@ -833,7 +833,7 @@ class AlPanelInterfaceHelper(AlPanelInterface):
         self.PanelLastEventName = "Startup"
         self.PanelLastEventAction = "Startup"
         self.PanelLastEventTime = self._getTimeFunction().strftime("%d/%m/%Y, %H:%M:%S")
-        self.PanelStatusText = "Unknown"
+        #self.PanelStatusText = "Unknown"
         self.LastPanelEventData = {}
 
         # Keep a dict of the sensors so we know if its new or existing
@@ -863,7 +863,7 @@ class AlPanelInterfaceHelper(AlPanelInterface):
         ts = titlecase(self.PanelTroubleStatus.name.replace("_"," ")) # str(AlTroubleType()[self.PanelTroubleStatus]).replace("_"," ")
         al = titlecase(self.PanelAlarmStatus.name.replace("_"," ")) # str(AlAlarmType()[self.PanelAlarmStatus]).replace("_"," ")
 
-        log.debug("   Mode  {: <18}     Status      {: <18}     Trouble {: <13}     AlarmStatus {: <12}".format(pm, self.PanelStatusText, ts, al))
+        log.debug("   Mode  {: <18}     Status      {: <18}     Trouble {: <13}     AlarmStatus {: <12}".format(pm, self.PanelState.name, ts, al))
         log.debug(" ================================================================================================================================================================================")
 
     def getPanelModel(self):

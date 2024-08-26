@@ -178,7 +178,7 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
                 armcode = self._client.getPanelStatus()
                 if armcode is not None and armcode in map_panel_status_to_ha_status:
                     self._mystate = map_panel_status_to_ha_status[armcode]
-
+            #_LOGGER.debug(f"[alarm_control_panel]  update {self._mystate=}   {armcode=}")
             # Currently may only contain "Exception Count"
             data = self._client.getClientStatusDict()
             #_LOGGER.debug(f"data {data}")
@@ -249,14 +249,26 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
         """Send disarm command."""
         #_LOGGER.debug(f"alarm control panel alarm_disarm {self.entity_id=}")
         if not self.isPanelConnected():
-            raise HomeAssistantError(f"Visonic Integration {self._myname} not connected to panel.")
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self._myname
+                    }
+                )
         self._client.sendCommand("Disarm", AlPanelCommand.DISARM, code)
 
     def alarm_arm_night(self, code=None):
         """Send arm night command (Same as arm home)."""
         #_LOGGER.debug(f"alarm control panel alarm_arm_night {self.entity_id=}")
         if not self.isPanelConnected():
-            raise HomeAssistantError(f"Visonic Integration {self._myname} not connected to panel.")
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self._myname
+                    }
+                )
         if self._client.isArmNight():
             self._client.sendCommand("Arm Night", AlPanelCommand.ARM_HOME_INSTANT, code)
 
@@ -264,7 +276,13 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
         """Send arm home command."""
         #_LOGGER.debug(f"alarm control panel alarm_arm_home {self.entity_id=}")
         if not self.isPanelConnected():
-            raise HomeAssistantError(f"Visonic Integration {self._myname} not connected to panel.")
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self._myname
+                    }
+                )
         if self._client.isArmHome():
             command = AlPanelCommand.ARM_HOME_INSTANT if self._client.isArmHomeInstant() else AlPanelCommand.ARM_HOME
             self._client.sendCommand("Arm Home", command, code)
@@ -273,7 +291,13 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
         """Send arm away command."""
         #_LOGGER.debug(f"alarm control panel alarm_arm_away {self.entity_id=}")
         if not self.isPanelConnected():
-            raise HomeAssistantError(f"Visonic Integration {self._myname} not connected to panel.")
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self._myname
+                    }
+                )
         command = AlPanelCommand.ARM_AWAY_INSTANT if self._client.isArmAwayInstant() else AlPanelCommand.ARM_AWAY
         self._client.sendCommand("Arm Away", command, code)
 
@@ -281,7 +305,13 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
         """Send alarm trigger command."""
         #_LOGGER.debug(f"alarm control panel alarm_trigger {self.entity_id=}")
         if not self.isPanelConnected():
-            raise HomeAssistantError(f"Visonic Integration {self._myname} not connected to panel.")
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self._myname
+                    }
+                )
         if self._client.isPowerMaster():
             self._client.sendCommand("Trigger Siren", AlPanelCommand.TRIGGER , code)
             #self._client.sendCommand("Arm Away", command, code)

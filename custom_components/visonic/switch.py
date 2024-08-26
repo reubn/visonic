@@ -50,6 +50,9 @@ async def async_setup_entry(
 class VisonicSwitch(SwitchEntity):
     """Representation of a Visonic X10 Switch."""
 
+    _attr_translation_key: str = "alarm_panel_key"
+    _attr_has_entity_name = True
+
     def __init__(self, hass: HomeAssistant, client: VisonicClient, visonic_device: AlSwitchDevice):
         """Initialise a Visonic X10 Device."""
         #_LOGGER.debug("Creating X10 Switch %s", visonic_device.id)
@@ -135,9 +138,25 @@ class VisonicSwitch(SwitchEntity):
                  "manufacturer": "Visonic", 
             }
 
+    def isPanelConnected(self) -> bool:
+        """Are we connected to the Alarm Panel."""
+        # If we are starting up or have been removed then assume we need a valid code
+        #_LOGGER.debug(f"alarm control panel isPanelConnected {self.entity_id=}")
+        if self._client is None:
+            return False
+        return self._client.isPanelConnected()
+
     # "off"  "on"  "dimmer"  "brighten"
     def turnmeonandoff(self, state : AlX10Command):
         """Send disarm command."""
+        if not self.isPanelConnected():
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self._client.getAlarmPanelUniqueIdent() if self._client is not None else "<Your Panel>"
+                    }
+                )
         self._client.setX10(self._x10id, state)
 
     @property

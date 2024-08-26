@@ -1,5 +1,5 @@
 {
-    "title": "Visonic Alarm Configuration",
+    "title": "Visonic Alarm Panel",
     "config": {
         "abort": {
             "already_configured": "Alarm Panel Connection Already Configured",
@@ -132,7 +132,7 @@
             },
             "parameters11": {
                 "description": "",
-                "title": "Alarm Panel Arm/Disarm Settings",
+                "title": "Alarm Panel Zone/Sensor Settings",
                 "data": {
                     "language": "Language (EN, NL, FR, Panel Language)",
                     "motion_off_delay": "Motion/Camera off delay time (seconds)",
@@ -170,6 +170,36 @@
             }
         }
     },    
+    "device_automation": {
+        "action_type": {
+            "arm_away": "Arm {entity_name} away",
+            "arm_home": "Arm {entity_name} home",
+            "arm_night": "Arm {entity_name} night",
+            "arm_vacation": "Arm {entity_name} vacation",
+            "disarm": "Disarm {entity_name}",
+            "trigger": "Trigger {entity_name}"
+        },
+        "condition_type": {
+            "is_triggered": "{entity_name} is triggered",
+            "is_disarmed": "{entity_name} is disarmed",
+            "is_armed_home": "{entity_name} is armed home",
+            "is_armed_away": "{entity_name} is armed away",
+            "is_armed_night": "{entity_name} is armed night",
+            "is_armed_vacation": "{entity_name} is armed vacation"
+        },
+        "extra_fields": {
+            "code": "Code",
+            "for": "[%key:common::device_automation::extra_fields::for%]"
+        },
+        "trigger_type": {
+            "triggered": "{entity_name} triggered",
+            "disarmed": "{entity_name} disarmed",
+            "armed_home": "{entity_name} armed home",
+            "armed_away": "{entity_name} armed away",
+            "armed_night": "{entity_name} armed night",
+            "armed_vacation": "{entity_name} armed vacation"
+        }
+    },
     "services": {
         "alarm_panel_eventlog": {
             "name": "Retrieve Event Log",
@@ -247,7 +277,7 @@
                 },
                 "bypass": {
                     "name": "Bypass Command",
-                    "description": "An optional bypass ('True', 'On', 'Yes', 'Enable') or re-arm ('False', 'Off', 'No', 'Disable'), defaults to 'Off' if not set."
+                    "description": "To bypass or re-arm a Sensor."
                 },
                 "code": {
                     "name": "User Code",
@@ -257,44 +287,216 @@
         }
     },
     "entity": {
-  	    "alarm_control_panel": {
+  	    "switch": {
 	        "alarm_panel_key": {
 				"state_attributes": {
+					"panel": {
+						"name": "Panel ID"
+					},
+					"name": {
+						"name": "Name"
+					},
+					"type": {
+						"name": "Type"
+					},
+					"visonic_device": {
+						"name": "Zone Device ID"
+					},
+					"location": {
+						"name": "Location"
+					}
+   			    }
+			}
+		},
+  	    "select": {
+	        "alarm_panel_key": {
+				"state_attributes": {
+					"panel": {
+						"name": "Panel ID"
+					},
+					"visonic_device": {
+						"name": "Zone Device ID"
+					}
+   			    }
+			}
+		},
+  	    "image": {
+	        "alarm_panel_key": {
+				"state_attributes": {
+					"panel": {
+						"name": "Panel ID"
+					},
+					"visonic_device": {
+						"name": "Zone Device ID"
+					}
+   			    }
+			}
+		},
+  	    "sensor": {
+	        "alarm_panel_key": {
+				"state_attributes": {
+					"panel": {
+						"name": "Panel ID"
+					}
+   			    }
+			}
+		},
+  	    "binary_sensor": {
+	        "alarm_panel_key": {
+				"state": {
+					"off": "off",
+					"on": "on"
+				},
+				"state_attributes": {
+					"device_name": {
+						"name": "Device Name"
+					},
+					"zone_name": {
+						"name": "Zone Name"
+					},
+					"zone_type": {
+						"name": "Zone Type"
+					},
+					"zone_chime": {
+						"name": "Zone Chime"
+					},
+					"zone_motion_off_time": {
+						"name": "Zone Motion Off Time"
+					},
+					"visonic_device": {
+						"name": "Zone Device ID"
+					},
+					"battery_level": {
+						"name": "Battery Level"
+					},
+					"last_tripped_time": {
+						"name": "Zone Tripped Time",
+						"state": {
+							"unknown": "Not Yet Tripped"
+						}
+					},
+					"panel": {
+						"name": "Panel ID"
+					},
+					"device_tamper": {
+						"name": "Device Tamper",
+						"state": {
+							"false": "Good",
+							"true": "Alert",
+							"undefined": "Undefined"
+						}
+					},
+					"device_tripped": {
+						"name": "Device Tripped",
+						"state": {
+							"false": "No",
+							"true": "Yes"
+						}
+					},
+					"device_armed": {
+						"name": "Device Armed",
+						"state": {
+							"false": "Bypassed",
+							"true": "Yes"
+						}
+					},
+					"sensor_type": {
+						"name": "Sensor Type",
+						"state": {
+							"unknown": "Unknown"
+						}
+					},
+					"zone_open": {
+						"name": "Zone Open",
+						"state": {
+							"false": "No",
+							"true": "Yes"
+						}
+					},
+					"zone_tamper": {
+						"name": "Zone Tamper",
+						"state": {
+							"false": "Good",
+							"true": "Alert",
+							"undefined": "Undefined"
+						}
+					}
+				}				
+			}
+		},
+  	    "alarm_control_panel": {
+	        "alarm_panel_key": {
+				"state": {
+					"armed": "Armed",
+					"disarmed": "Disarmed",
+					"armed_home": "Armed Home",
+					"armed_away": "Armed Away",
+					"armed_night": "Armed Night",
+					"armed_vacation": "Armed Vacation",
+					"armed_custom_bypass": "Armed custom bypass",
+					"pending": "Pending",
+					"arming": "Arming",
+					"disarming": "Disarming",
+					"triggered": "Triggered"
+				},
+				"state_attributes": {
+					"code_format": {
+						"name": "Code format",
+						"state": {
+							"text": "Text",
+							"number": "Number"
+						}
+					},
+					"changed_by": {
+						"name": "Changed by"
+					},
+					"code_arm_required": {
+						"name": "Code for arming",
+						"state": {
+							"true": "Required",
+							"false": "Not required"
+						}
+					},
 					"lasteventname": {
-					    "name" : "last event name",
+					    "name" : "Last Event Name",
 						"state" : {
-							"System" : { "name" : "System - translated" },
-							"test_c" : { "name" : "three" },
-							"test_d" : "four"
+							"Startup": { "name" : "Startup - translated" },
+							"System" : { "name" : "System - translated" }
 						}
 					},
 					"lasteventaction": { 
-					    "name" : "last event action",
+					    "name" : "Last Event Action",
 						"state" : {
-							"Installer Programming" : { "name" : "Installer Programming - translated" },
-							"test_c" : { "name" : "three" },
-							"test_d" : "four"
+							"Startup": { "name" : "Startup - translated" },
+							"Installer Programming" : { "name" : "Installer Programming - translated" }
 						}
 					},
 					"lasteventtime": { 
-					    "name" : "last event time"
+					    "name" : "Last Event Time"
 					}
-				},
-				"state": {
-					"off": "off",
-					"on" : "on"
 				}
 	        }
 	    }
 	},
     "selector": {
-        "command": {
+        "alarm_command": {
             "options": {
                 "disarm": "Disarm",
                 "arm_home": "Arm Home",
                 "arm_home_instant": "Arm Home Instant",
                 "arm_away": "Arm Away",
-                "arm_away_instant": "Arm Away Instant"
+                "arm_away_instant": "Arm Away Instant",
+                "mute": "Mute Siren",
+                "trigger": "Trigger Siren",
+                "fire": "Fire Alarm",
+                "emergency": "Emergency Alarm",
+                "panic": "Panic Alarm"
+            }
+        },
+        "bypass_command": {
+            "options": {
+                "off": "Active",
+                "on": "Bypass"
             }
         },
         "x10command": {
@@ -338,5 +540,16 @@
 				"command_not_sent": "Command Not Sent To Panel"
 			}
 		}
-    }
+    },
+    "exceptions": {
+        "no_panel_connection": {
+            "message": "Visonic Integration for {myname} is not connected to the panel."
+        },
+        "invalid_arm_state": {
+            "message": "Invalid: Can't set the armed state to {option}. Allowed states are: {options}"
+        },
+        "invalid_arm_state_no_option": {
+            "message": "Armed state not defined. Allowed states are: {options}"
+        }
+	}
 }

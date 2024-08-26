@@ -81,6 +81,9 @@ async def async_setup_entry(
 class VisonicBinarySensor(BinarySensorEntity):
     """Representation of a Visonic Sensor."""
 
+    _attr_translation_key: str = "alarm_panel_key"
+    _attr_has_entity_name = True
+
     def __init__(self, hass, client: VisonicClient, sensor: AlSensorDevice, entry: VisonicConfigEntry):
         """Initialize the sensor."""
         #_LOGGER.debug("   In binary sensor VisonicSensor initialisation")
@@ -229,42 +232,42 @@ class VisonicBinarySensor(BinarySensorEntity):
             stype = self._visonic_device.getSensorType()
 
             attr = {}
-            attr["device name"] = self._dname
+            attr["device_name"] = self._dname
             if self._visonic_device.isZoneTamper() is None:
-                attr["zone tamper"] = "Undefined"
+                attr["zone_tamper"] = "undefined"
             else:
-                attr["zone tamper"] = "Yes" if self._visonic_device.isZoneTamper() else "No"
+                attr["zone_tamper"] = self._visonic_device.isZoneTamper() 
             if self._visonic_device.isTamper() is None:
-                attr["device tamper"] = "Undefined"
+                attr["device_tamper"] = "undefined"
             else:
-                attr["device tamper"] = "Yes" if self._visonic_device.isTamper() else "No"
+                attr["device_tamper"] = self._visonic_device.isTamper()
             
             if stype != AlSensorType.MOTION and stype != AlSensorType.CAMERA:
-                attr["zone open"] = "Yes" if self._visonic_device.isOpen() else "No"
+                attr["zone_open"] = self._visonic_device.isOpen()
             
             if stype != AlSensorType.UNKNOWN:
-                attr["sensor type"] = titlecase(str(stype).lower())
+                attr["sensor_type"] = titlecase(str(stype).lower())
             elif self._visonic_device.getRawSensorIdentifier() is not None:
-                attr["sensor type"] = "Undefined " + str(self._visonic_device.getRawSensorIdentifier())
+                attr["sensor_type"] = "Undefined " + str(self._visonic_device.getRawSensorIdentifier())
             else:
-                attr["sensor type"] = "Unknown"
+                attr["sensor_type"] = "unknown"
 
             #attr["zone type"] = self.ztype
-            attr["zone name"] = self._visonic_device.getZoneLocation()
-            attr["zone type"] = self._visonic_device.getZoneType()
-            attr["zone chime"] = self._visonic_device.getChimeType()
+            attr["zone_name"] = self._visonic_device.getZoneLocation()
+            attr["zone_type"] = self._visonic_device.getZoneType()
+            attr["zone_chime"] = self._visonic_device.getChimeType()
             
-            if self._visonic_device.getMotionDelayTime() is not None and len(str(self._visonic_device.getMotionDelayTime())) > 0:
-                attr["zone motion off time"] = self._visonic_device.getMotionDelayTime()
+            if self.client.isPowerMaster() and self._visonic_device.getMotionDelayTime() is not None and len(str(self._visonic_device.getMotionDelayTime())) > 0:
+                attr["zone_motion_off_time"] = self._visonic_device.getMotionDelayTime()
 
             attr[DEVICE_ATTRIBUTE_NAME] = self._visonic_device.getDeviceID()
 
-            attr[ATTR_TRIPPED] = "True" if self._visonic_device.isTriggered() else "False"
+            attr[ATTR_TRIPPED] = self._visonic_device.isTriggered()
             if stype is not None and stype != AlSensorType.WIRED:
                 attr[ATTR_BATTERY_LEVEL] = 0 if self._visonic_device.isLowBattery() else 100
-            attr[ATTR_ARMED] = "False" if self._visonic_device.isBypass() else "True"
+            attr[ATTR_ARMED] = not self._visonic_device.isBypass()
             if self._visonic_device.getLastTriggerTime() is None:
-                attr[ATTR_LAST_TRIP_TIME] = None
+                attr[ATTR_LAST_TRIP_TIME] = "unknown"
             else:
                 tm = self._visonic_device.getLastTriggerTime().isoformat()
                 # miss off the decimal hundredths seconds onwards

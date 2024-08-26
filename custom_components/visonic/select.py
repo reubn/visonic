@@ -61,6 +61,9 @@ async def async_setup_entry(
 class VisonicSelect(SelectEntity):
     """Representation of a visonic arm/bypass select entity."""
 
+    _attr_translation_key: str = "alarm_panel_key"
+    _attr_has_entity_name = True
+
     def __init__(self, hass: HomeAssistant, client: VisonicClient, visonic_device: AlSensorDevice):
         """Initialize the visonic binary sensor arm/bypass select entity."""
         SelectEntity.__init__(self)
@@ -141,12 +144,29 @@ class VisonicSelect(SelectEntity):
             return "mdi:alarm"
         return "mdi:alarm-off"
 
+    def isPanelConnected(self) -> bool:
+        """Are we connected to the Alarm Panel."""
+        # If we are starting up or have been removed then assume we need a valid code
+        #_LOGGER.debug(f"alarm control panel isPanelConnected {self.entity_id=}")
+        if self._client is None:
+            return False
+        return self._client.isPanelConnected()
+
     def select_option(self, option: str) -> None:
         """Change the visonic sensor armed state"""
+        if not self.isPanelConnected():
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self._client.getAlarmPanelUniqueIdent() if self._client is not None else "<Your Panel>"
+                    }
+                )
+
         if self._pending_state_is_armed is not None:
             _LOGGER.debug("Currently Pending {0} so ignoring request to select option".format(self.unique_id))
             self._client.sendHANotification(AvailableNotifications.ALWAYS, "Sensor Bypass: Change in arm/bypass already in progress, please try again")
-        elif option in self.options:
+        elif option is not None and option in self.options:
             #_LOGGER.debug("Sending Option {0} to {1}".format(option, self.unique_id))
             result = self._client.sendBypass(self._visonic_device.getDeviceID(), option == BYPASS, "") # pin code to "" to use default if set
             if result == AlCommandStatus.SUCCESS:
@@ -158,8 +178,24 @@ class VisonicSelect(SelectEntity):
                 if result in messageDict:
                     message = messageDict[result]
                 self._client.sendHANotification(AvailableNotifications.ALWAYS, message)
+        elif option is None:
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="invalid_arm_state_no_option",
+                    translation_placeholders={
+                        "options": str(self.options)
+                    }
+                )
         else:
-            raise HomeAssistantError(f"Can't set the armed state to {option}. Allowed states are: {self.options}")
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="invalid_arm_state",
+                    translation_placeholders={
+                        "option": option,
+                        "options": str(self.options)
+                    }
+                )
+
         if self.entity_id is not None:
             self.schedule_update_ha_state(True)
 

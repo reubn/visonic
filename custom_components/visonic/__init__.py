@@ -66,7 +66,7 @@ ALARM_SCHEMA_EVENTLOG = vol.Schema(
 ALARM_SCHEMA_COMMAND = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-        vol.Required(CONF_COMMAND) : vol.In([x.lower().replace("_"," ").title() for x in list(AlPanelCommand.get_variables().keys())]),
+        vol.Required(CONF_COMMAND) : vol.In([x.lower() for x in list(AlPanelCommand.get_variables().keys())]),
         vol.Optional(ATTR_CODE, default=""): cv.string,
     }
 )
@@ -74,7 +74,7 @@ ALARM_SCHEMA_COMMAND = vol.Schema(
 ALARM_SCHEMA_X10 = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-        vol.Required(CONF_X10_COMMAND) : vol.In([x.lower().replace("_"," ").title() for x in list(AlX10Command.get_variables().keys())]),
+        vol.Required(CONF_X10_COMMAND) : vol.In([x.lower() for x in list(AlX10Command.get_variables().keys())]),
     }
 )
 
@@ -87,7 +87,7 @@ ALARM_SCHEMA_RECONNECT = vol.Schema(
 ALARM_SCHEMA_BYPASS = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-        vol.Optional(ATTR_BYPASS, default=False): cv.boolean,
+        vol.Required(ATTR_BYPASS, default=False): cv.boolean,
         vol.Optional(ATTR_CODE, default=""): cv.string,
     }
 )

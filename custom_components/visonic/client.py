@@ -120,7 +120,7 @@ from .const import (
 #    "trigger",
 #]
 
-CLIENT_VERSION = "0.9.7.7"
+CLIENT_VERSION = "0.9.7.8"
 
 MAX_CLIENT_LOG_ENTRIES = 300
 
@@ -1609,7 +1609,13 @@ class VisonicClient:
     async def service_panel_reconnect(self, call):
         """Service call to re-connect the connection."""
         if not self.isPanelConnected():
-            raise HomeAssistantError(f"Visonic Integration not connected to panel {self.getPanelID()}.")
+            raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="no_panel_connection",
+                    translation_placeholders={
+                        "myname": self.getAlarmPanelUniqueIdent()
+                    }
+                )
 
         if call.context.user_id:
             #self.logstate_debug(f"Checking user information for permissions: {call.context.user_id}")

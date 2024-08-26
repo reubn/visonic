@@ -44,7 +44,7 @@ ALARM_SENSOR_BYPASS = "alarm_sensor_bypass"
 ALARM_SENSOR_IMAGE = "alarm_sensor_image"
 
 PANEL_ATTRIBUTE_NAME = "panel"
-DEVICE_ATTRIBUTE_NAME = "visonic device"
+DEVICE_ATTRIBUTE_NAME = "visonic_device"
 
 # Default connection details (connection can be one of Ethernet, USB, RS232)
 DEFAULT_DEVICE_HOST = "127.0.0.1"
