@@ -263,7 +263,6 @@ class VisonicClient:
             if self.process_event is not None:
                 datadict = self.visonicProtocol.getEventData()
                 #datadict.update(self.LastPanelEventData)
-
                 self.process_event(e, datadict)
         else:
             print(f"Visonic attempt to call onPanelChangeHandler type {type(e)}  device is {e}")
@@ -307,7 +306,7 @@ class VisonicClient:
             AlConfiguration.DownloadCode: self.config.get(CONF_DOWNLOAD_CODE, ""),
             AlConfiguration.ForceStandard: self.ForceStandardMode,
             AlConfiguration.DisableAllCommands: self.DisableAllCommands,
-            AlConfiguration.PluginLanguage: self.config.get(CONF_LANGUAGE, "Panel"),
+            #AlConfiguration.PluginLanguage: self.config.get(CONF_LANGUAGE, "Panel"),
             AlConfiguration.SirenTriggerList: self.config.get(CONF_SIREN_SOUNDING, ["Intruder"])
         }
 
@@ -534,11 +533,11 @@ class VisonicClient:
             self.visonicProtocol.updateSettings(self.__getConfigData())
         #print("[updateConfig] exit")
 
-    def getPanelLastEvent(self) -> (str, str, str):
-        """ Get Last Panel Event. """
-        if self.visonicProtocol is not None:
-            return self.visonicProtocol.getPanelLastEvent()
-        return False
+    #def getPanelLastEvent(self) -> (str, str, str):
+    #    """ Get Last Panel Event. """
+    #    if self.visonicProtocol is not None:
+    #        return self.visonicProtocol.getPanelLastEvent()
+    #    return False
 
     def getPanelTrouble(self) -> AlTroubleType:
         """ Get the panel trouble state """

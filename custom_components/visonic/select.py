@@ -62,7 +62,7 @@ class VisonicSelect(SelectEntity):
     """Representation of a visonic arm/bypass select entity."""
 
     _attr_translation_key: str = "alarm_panel_key"
-    _attr_has_entity_name = True
+    #_attr_has_entity_name = True
 
     def __init__(self, hass: HomeAssistant, client: VisonicClient, visonic_device: AlSensorDevice):
         """Initialize the visonic binary sensor arm/bypass select entity."""

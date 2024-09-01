@@ -44,13 +44,7 @@
                 "data": {
                     "exclude_x10": "X10 Devices to Exclude (comma separated)",
                     "exclude_sensor": "Sensor List to Exclude (comma separated)",
-                    "emulation_mode": "Emulation Mode"
-                }
-            },
-            "parameters2": {
-                "description": "",
-                "title": "Alarm Panel Powerlink Settings",
-                "data": {
+                    "emulation_mode": "Emulation Mode",
                     "download_code": "Download Code",
                     "show_eeprom_attributes": "Show the EEPROM Data in the Alarm Attributes"
                 }
@@ -70,7 +64,6 @@
                 "description": "",
                 "title": "Alarm Panel Zone/Sensor Settings",
                 "data": {
-                    "language": "Language (EN, NL, FR, Panel Language)",
                     "motion_off_delay": "Motion/Camera off delay time (seconds)",
                     "magnet_closed_delay": "Magnet/Wired closed delay time (seconds)",
                     "emergency_off_delay": "Smoke/Fire off delay time (seconds)"
@@ -84,8 +77,8 @@
                     "force_numeric_keypad": "Force use of a Numeric Keypad",
                     "arm_home_enabled": "Arm Home Enabled",
                     "arm_night_enabled": "Arm Night Enabled",
-                    "arm_away_instant": "Arm Away performs Arm Away Instant",
-                    "arm_home_instant": "Arm Home performs Arm Home Instant",
+                    "arm_away_instant": "Arm Away performs an Arm Away Instant",
+                    "arm_home_instant": "Arm Home performs an Arm Home Instant",
                     "allow_remote_arm": "Allow Panel Arm from Home Assistant",
                     "allow_remote_disarm": "Allow Panel DisArm from Home Assistant",
                     "allow_sensor_bypass": "Allow each sensor to be bypassed"
@@ -134,7 +127,6 @@
                 "description": "",
                 "title": "Alarm Panel Zone/Sensor Settings",
                 "data": {
-                    "language": "Language (EN, NL, FR, Panel Language)",
                     "motion_off_delay": "Motion/Camera off delay time (seconds)",
                     "magnet_closed_delay": "Magnet/Wired closed delay time (seconds)",
                     "emergency_off_delay": "Smoke/Fire off delay time (seconds)"
@@ -148,8 +140,8 @@
                     "force_numeric_keypad": "Force use of a Numeric Keypad",
                     "arm_home_enabled": "Arm Home Enabled",
                     "arm_night_enabled": "Arm Night Enabled",
-                    "arm_away_instant": "Arm Away performs Arm Away Instant",
-                    "arm_home_instant": "Arm Home performs Arm Home Instant",
+                    "arm_away_instant": "Arm Away performs an Arm Away Instant",
+                    "arm_home_instant": "Arm Home performs an Arm Home Instant",
                     "allow_remote_arm": "Allow Panel Arm from Home Assistant",
                     "allow_remote_disarm": "Allow Panel DisArm from Home Assistant",
                     "allow_sensor_bypass": "Allow each sensor to be bypassed"
@@ -172,32 +164,32 @@
     },    
     "device_automation": {
         "action_type": {
-            "arm_away": "Arm {entity_name} away",
-            "arm_home": "Arm {entity_name} home",
-            "arm_night": "Arm {entity_name} night",
-            "arm_vacation": "Arm {entity_name} vacation",
+            "arm_away": "Arm {entity_name} Away",
+            "arm_home": "Arm {entity_name} Home",
+            "arm_night": "Arm {entity_name} Night",
+            "arm_vacation": "Arm {entity_name} Vacation",
             "disarm": "Disarm {entity_name}",
             "trigger": "Trigger {entity_name}"
         },
         "condition_type": {
-            "is_triggered": "{entity_name} is triggered",
-            "is_disarmed": "{entity_name} is disarmed",
-            "is_armed_home": "{entity_name} is armed home",
-            "is_armed_away": "{entity_name} is armed away",
-            "is_armed_night": "{entity_name} is armed night",
-            "is_armed_vacation": "{entity_name} is armed vacation"
+            "is_triggered": "{entity_name} is Triggered",
+            "is_disarmed": "{entity_name} is Disarmed",
+            "is_armed_home": "{entity_name} is Armed Home",
+            "is_armed_away": "{entity_name} is Armed Away",
+            "is_armed_night": "{entity_name} is Armed Night",
+            "is_armed_vacation": "{entity_name} is Armed Vacation"
         },
         "extra_fields": {
             "code": "Code",
             "for": "[%key:common::device_automation::extra_fields::for%]"
         },
         "trigger_type": {
-            "triggered": "{entity_name} triggered",
-            "disarmed": "{entity_name} disarmed",
-            "armed_home": "{entity_name} armed home",
-            "armed_away": "{entity_name} armed away",
-            "armed_night": "{entity_name} armed night",
-            "armed_vacation": "{entity_name} armed vacation"
+            "triggered": "{entity_name} Triggered",
+            "disarmed": "{entity_name} Disarmed",
+            "armed_home": "{entity_name} Armed Home",
+            "armed_away": "{entity_name} Armed Away",
+            "armed_night": "{entity_name} Armed Night",
+            "armed_vacation": "{entity_name} Armed Vacation"
         }
     },
     "services": {
@@ -303,7 +295,41 @@
 						"name": "Zone Device ID"
 					},
 					"location": {
-						"name": "Location"
+						"name": "Location",
+						"state": {
+							"attic"           : "Loft",
+							"back_door"       : "Back Doorway",
+							"basement"        : "Basement",
+							"bathroom"        : "Bathroom",
+							"bedroom"         : "Bedroom",
+							"child_room"      : "Child Room",
+							"conservatory"    : "Conservatory",
+							"play_room"       : "Play Room",
+							"dining_room"     : "Dining Room",
+							"downstairs"      : "Downstairs",
+							"emergency"       : "Emergency",
+							"fire"            : "Fire",
+							"front_door"      : "Front Door",
+							"garage"          : "Garage",
+							"garage_door"     : "Garage Door",
+							"guest_room"      : "Guest Room",
+							"hall"            : "Hall",
+							"kitchen"         : "Kitchen",
+							"laundry_room"    : "Laundry Room",
+							"living_room"     : "Living Room",
+							"master_bathroom" : "Master Bathroom",
+							"master_bedroom"  : "Master Bedroom",
+							"office"          : "Office",
+							"upstairs"        : "Upstairs",
+							"utility_room"    : "Utility Room",
+							"yard"            : "Yard",
+							"custom_1"        : "Custom 1",
+							"custom_2"        : "Custom 2",
+							"custom_3"        : "Custom 3",
+							"custom_4"        : "Custom 4",
+							"custom_5"        : "Custom 5",
+							"not_installed"   : "Not Installed"
+						}
 					}
    			    }
 			}
@@ -352,13 +378,84 @@
 						"name": "Device Name"
 					},
 					"zone_name": {
-						"name": "Zone Name"
+						"name": "Zone Name",
+						"state": {
+							"attic"           : "Loft",
+							"back_door"       : "Back Doorway",
+							"basement"        : "Basement",
+							"bathroom"        : "Bathroom",
+							"bedroom"         : "Bedroom",
+							"child_room"      : "Child Room",
+							"conservatory"    : "Conservatory",
+							"play_room"       : "Play Room",
+							"dining_room"     : "Dining Room",
+							"downstairs"      : "Downstairs",
+							"emergency"       : "Emergency",
+							"fire"            : "Fire",
+							"front_door"      : "Front Door",
+							"garage"          : "Garage",
+							"garage_door"     : "Garage Door",
+							"guest_room"      : "Guest Room",
+							"hall"            : "Hall",
+							"kitchen"         : "Kitchen",
+							"laundry_room"    : "Laundry Room",
+							"living_room"     : "Living Room",
+							"master_bathroom" : "Master Bathroom",
+							"master_bedroom"  : "Master Bedroom",
+							"office"          : "Office",
+							"upstairs"        : "Upstairs",
+							"utility_room"    : "Utility Room",
+							"yard"            : "Yard",
+							"custom_1"        : "Custom 1",
+							"custom_2"        : "Custom 2",
+							"custom_3"        : "Custom 3",
+							"custom_4"        : "Custom 4",
+							"custom_5"        : "Custom 5",
+							"not_installed"   : "Not Installed"
+						}
 					},
 					"zone_type": {
-						"name": "Zone Type"
+						"name": "Zone Type",
+						"state": {
+							"non-alarm"        : "Non Alarm",
+							"emergency"        : "Emergency",
+							"flood"            : "Flood",
+							"gas"              : "Gas",
+							"delay_1"          : "Delay 1",
+							"delay_2"          : "Delay 2",
+							"interior_follow"  : "Interior Follow",
+							"perimeter"        : "Perimeter",
+							"perimeter_follow" : "Perimeter Follow",
+							"24_hours_silent"  : "24 Hours Silent",
+							"24_hours_audible" : "24 Hours Audible",
+							"fire"             : "Fire",
+							"interior"         : "Interior",
+							"home_delay"       : "Home Delay",
+							"temperature"      : "Temperature",
+							"outdoor"          : "Outdoor",
+							"undefined"        : "Undefined"
+						}
+					},
+					"zone_trouble": {
+						"name": "Zone Problem",
+						"state": {
+							"none"         : "No",
+							"tamper"       : "Tamper",
+							"jamming"      : "RF Jamming",
+							"comm_failure" : "Communication Failure",
+							"line_failure" : "Line Failure",
+							"fuse"         : "Fuse Problem",
+							"not_active"   : "Sensor Inactive",
+							"ac_failure"   : "Mains Supply Failure"
+						}
 					},
 					"zone_chime": {
-						"name": "Zone Chime"
+						"name": "Zone Chime",
+						"state": {
+							"chime_off"       : "Chime Off",
+							"melody_chime"    : "Melody Chime",
+							"zone_name_chime" : "Zone Name Chime"
+						}
 					},
 					"zone_motion_off_time": {
 						"name": "Zone Motion Off Time"
@@ -396,14 +493,25 @@
 					"device_armed": {
 						"name": "Device Armed",
 						"state": {
-							"false": "Bypassed",
+							"false": "No",
 							"true": "Yes"
 						}
 					},
 					"sensor_type": {
 						"name": "Sensor Type",
 						"state": {
-							"unknown": "Unknown"
+							"magnet"     : "Magnet",
+							"motion"     : "Motion PIR",
+							"camera"     : "Camera PIR",
+							"wired"      : "Wired",
+							"smoke"      : "Smoke",
+							"flood"      : "Flood",
+							"gas"        : "Gas",
+							"vibration"  : "Vibration",
+							"shock"      : "Shock",
+							"temperature": "Temperature",
+							"sound"      : "Sound",
+							"unknown"    : "Unknown"
 						}
 					},
 					"zone_open": {
@@ -433,7 +541,7 @@
 					"armed_away": "Armed Away",
 					"armed_night": "Armed Night",
 					"armed_vacation": "Armed Vacation",
-					"armed_custom_bypass": "Armed custom bypass",
+					"armed_custom_bypass": "Armed Custom Bypass",
 					"pending": "Pending",
 					"arming": "Arming",
 					"disarming": "Disarming",
@@ -457,19 +565,94 @@
 							"false": "Not required"
 						}
 					},
-					"lasteventname": {
-					    "name" : "Last Event Name",
-						"state" : {
-							"Startup": { "name" : "Startup - translated" },
-							"System" : { "name" : "System - translated" }
+					"mode": {
+						"unknown": "Unknown",
+						"problem": "Problem",
+						"starting": "Starting",
+						"standard": "Standard",
+						"standard_plus": "Standard Plus",
+						"powerlink": "Powerlink",
+						"powerlink_bridged": "Powerlink (Bridged)",
+						"download": "Download EPROM",
+						"stopped": "Integration Stopped",
+						"minimal_only": "Minimal Panel Connection"
+					},
+					"state": {
+						"unknown": "Unknown",
+						"disarmed": "Disarmed",
+						"arming_home": "Arming Home",
+						"arming_away": "Arming Away",
+						"entry_delay": "Entry Delay",
+						"armed_home": "Armed Home",
+						"armed_away": "Armed Away",
+						"armed_home_bypass": "Armed Home (Bypass)",
+						"armed_away_bypass": "Armed Away (Bypass)",
+						"armed_home_instant": "Armed Home (Instant)",
+						"armed_away_instant": "Armed Away (Instant)",
+						"entry_delay_instant": "Entry Delay (Instant)",
+						"user_test": "User Test",
+						"downloading": "Downloading EPROM",
+						"installer": "Installer",
+						"triggered": "Triggered"
+					},
+					"ready": {
+						"tamper": "Panel Ready",
+						"state": {
+							"false": "No",
+							"true": "Yes"
 						}
 					},
-					"lasteventaction": { 
-					    "name" : "Last Event Action",
-						"state" : {
-							"Startup": { "name" : "Startup - translated" },
-							"Installer Programming" : { "name" : "Installer Programming - translated" }
+					"tamper": {
+						"tamper": "Panel Tamper Alarm",
+						"state": {
+							"false": "No",
+							"true": "Yes"
 						}
+					},
+					"memory": {
+						"name": "Panel Alert in Memory",
+						"state": {
+							"false": "No",
+							"true": "Yes"
+						}
+					},
+					"bypass": {
+						"name": "Panel Bypass",
+						"state": {
+							"false": "No",
+							"true": "Yes"
+						}
+					},
+					"alarm": {
+					    "name" : "Alarm",
+						"state" : {
+							"none"     : "No Alarm",
+							"intruder" : "Intruder",
+							"tamper"   : "Tamper",
+							"panic"    : "Panic",
+							"fire"     : "Fire",
+							"emergency": "Emergency",
+							"gas"      : "Gas",
+							"flood"    : "Flood"
+						}
+					},
+					"trouble": {
+					    "name" : "Trouble",
+						"state" : {
+							"none"         : "No Trouble",
+							"general"      : "General",
+							"communication": "Communication Loss",
+							"battery"      : "Battery",
+							"power"        : "Power",
+							"jamming"      : "Jamming",
+							"telephone"    : "Telephone Line Failure"
+						}
+					},
+					"lasteventname": {
+					    "name" : "Last Event Name"
+					},
+					"lasteventaction": { 
+					    "name" : "Last Event Action"
 					},
 					"lasteventtime": { 
 					    "name" : "Last Event Time"
@@ -551,5 +734,182 @@
         "invalid_arm_state_no_option": {
             "message": "Armed state not defined. Allowed states are: {options}"
         }
+	},
+	"entity_component": {
+  	    "event_name": {
+			"state": {
+			    "startup"   : "Startup",
+				"system"    : "System",
+				"zone"      : "Zone",
+				"fob"       : "Fob",
+				"user"      : "User",
+				"pad"       : "Pad",
+				"siren"     : "Siren",
+				"2pad"      : "2Pad",
+				"x10"       : "X10",
+				"pgm"       : "PGM",
+				"gsm"       : "GSM",
+				"powerlink" : "P-LINK",
+				"ptag"      : "PTag",
+				"repeater"  : "Rptr",
+				"undefined" : "Unknown"
+			}
+		},
+  	    "event_action": {
+			"state": {
+				"000"  : "Normal",
+				"001"  : "Interior Alarm",
+				"002"  : "Perimeter Alarm", 
+				"003"  : "Delay Alarm", 
+				"004"  : "24h Silent Alarm", 
+				"005"  : "24h Audible Alarm",
+				"006"  : "Tamper", 
+				"007"  : "Control Panel Tamper", 
+				"008"  : "Tamper Alarm", 
+				"009"  : "Tamper Alarm", 
+				"010"  : "Communication Loss",
+				"011"  : "Panic From Keyfob", 
+				"012"  : "Panic From Control Panel", 
+				"013"  : "Duress", 
+				"014"  : "Confirm Alarm", 
+				"015"  : "General Trouble",
+				"016"  : "General Trouble Restore", 
+				"017"  : "Interior Restore", 
+				"018"  : "Perimeter Restore", 
+				"019"  : "Delay Restore", 
+				"020"  : "24h Silent Restore",
+				"021"  : "24h Audible Restore", 
+				"022"  : "Tamper Restore", 
+				"023"  : "Control Panel Tamper Restore", 
+				"024"  : "Tamper Restore", 
+				"025"  : "Tamper Restore",
+				"026"  : "Communication Restore", 
+				"027"  : "General Restore", 
+				"028"  : "Cancel Alarm", 
+				"029"  : "Trouble Restore", 
+				"030"  : "Not used",
+				"031"  : "Recent Close", 
+				"032"  : "Fire", 
+				"033"  : "Fire Restore", 
+				"034"  : "Not Active", 
+				"035"  : "Emergency",
+				"036"  : "Remove User", 
+				"037"  : "Disarm Latchkey", 
+				"038"  : "Confirm Alarm Emergency", 
+				"039"  : "Supervision (Inactive)", 
+				"040"  : "Supervision Restore (Active)",
+				"041"  : "Low Battery", 
+				"042"  : "Low Battery Restore", 
+				"043"  : "AC Fail", 
+				"044"  : "AC Restore", 
+				"045"  : "Control Panel Low Battery",
+				"046"  : "Control Panel Low Battery Restore", 
+				"047"  : "RF Jamming", 
+				"048"  : "RF Jamming Restore", 
+				"049"  : "Communications Failure", 
+				"050"  : "Communications Restore",
+				"051"  : "Telephone Line Failure", 
+				"052"  : "Telephone Line Restore", 
+				"053"  : "Auto Test", 
+				"054"  : "Fuse Failure", 
+				"055"  : "Fuse Restore",
+				"056"  : "Keyfob Low Battery", 
+				"057"  : "Keyfob Low Battery Restore", 
+				"058"  : "Engineer Reset", 
+				"059"  : "Battery Disconnect", 
+				"060"  : "1-Way Keypad Low Battery",
+				"061"  : "1-Way Keypad Low Battery Restore", 
+				"062"  : "1-Way Keypad Inactive", 
+				"063"  : "1-Way Keypad Restore Active", 
+				"064"  : "Low Battery Ack", 
+				"065"  : "Clean Me",
+				"066"  : "Fire Trouble", 
+				"067"  : "Low Battery", 
+				"068"  : "Battery Restore", 
+				"069"  : "AC Fail", 
+				"070"  : "AC Restore",
+				"071"  : "Supervision (Inactive)", 
+				"072"  : "Supervision Restore (Active)", 
+				"073"  : "Gas Alert", 
+				"074"  : "Gas Alert Restore", 
+				"075"  : "Gas Trouble",
+				"076"  : "Gas Trouble Restore", 
+				"077"  : "Flood Alert", 
+				"078"  : "Flood Alert Restore", 
+				"079"  : "X-10 Trouble", 
+				"080"  : "X-10 Trouble Restore",
+				"081"  : "Armed Home", 
+				"082"  : "Armed Away", 
+				"083"  : "Quick Armed Home", 
+				"084"  : "Quick Armed Away", 
+				"085"  : "Disarmed",
+				"086"  : "Fail To Auto-Arm", 
+				"087"  : "Enter To Test Mode", 
+				"088"  : "Exit From Test Mode", 
+				"089"  : "Force Arm", 
+				"090"  : "Auto Arm",
+				"091"  : "Instant Arm", 
+				"092"  : "Bypass", 
+				"093"  : "Fail To Arm", 
+				"094"  : "Door Open", 
+				"095"  : "Communication Established By Control Panel",
+				"096"  : "System Reset", 
+				"097"  : "Installer Programming", 
+				"098"  : "Wrong Password", 
+				"099"  : "Not Sys Event", 
+				"100"  : "Not Sys Event",
+				"101"  : "Extreme Hot Alert", 
+				"102"  : "Extreme Hot Alert Restore", 
+				"103"  : "Freeze Alert", 
+				"104"  : "Freeze Alert Restore", 
+				"105"  : "Human Cold Alert",
+				"106"  : "Human Cold Alert Restore", 
+				"107"  : "Human Hot Alert", 
+				"108"  : "Human Hot Alert Restore", 
+				"109"  : "Temperature Sensor Trouble", 
+				"110"  : "Temperature Sensor Trouble Restore",
+				"111"  : "PIR Mask", 
+				"112"  : "PIR Mask Restore", 
+				"113"  : "Repeater low battery", 
+				"114"  : "Repeater low battery restore", 
+				"115"  : "Repeater inactive",
+				"116"  : "Repeater inactive restore", 
+				"117"  : "Repeater tamper", 
+				"118"  : "Repeater tamper restore", 
+				"119"  : "Siren test end", 
+				"120"  : "Devices test end",
+				"121"  : "One way comm. trouble", 
+				"122"  : "One way comm. trouble restore", 
+				"123"  : "Sensor outdoor alarm", 
+				"124"  : "Sensor outdoor restore", 
+				"125"  : "Guard sensor alarmed",
+				"126"  : "Guard sensor alarmed restore",
+				"127"  : "Date time change", 
+				"128"  : "System shutdown", 
+				"129"  : "System power up", 
+				"130"  : "Missed Reminder",
+				"131"  : "Pendant test fail", 
+				"132"  : "Basic KP inactive", 
+				"133"  : "Basic KP inactive restore", 
+				"134"  : "Basic KP tamper", 
+				"135"  : "Basic KP tamper Restore",
+				"136"  : "Heat", 
+				"137"  : "Heat restore", 
+				"138"  : "LE Heat Trouble", 
+				"139"  : "CO alarm", 
+				"140"  : "CO alarm restore",
+				"141"  : "CO trouble", 
+				"142"  : "CO trouble restore", 
+				"143"  : "Exit Installer", 
+				"144"  : "Enter Installer", 
+				"145"  : "Self test trouble",
+				"146"  : "Self test restore", 
+				"147"  : "Confirm panic event", 
+				"148"  : "n/a", 
+				"149"  : "Soak test fail", 
+				"150"  : "Fire Soak test fail",
+				"151"  : "Gas Soak test fail"
+			}
+		}
 	}
 }

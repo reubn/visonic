@@ -56,7 +56,6 @@ alarm_panel_reconnect:
           integration: visonic
           domain: alarm_control_panel
 
-
 alarm_panel_x10:
   fields:
     entity_id:

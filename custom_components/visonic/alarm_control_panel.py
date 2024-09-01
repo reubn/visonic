@@ -7,10 +7,10 @@ import homeassistant.components.alarm_control_panel as alarm
 from homeassistant.util import slugify
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.alarm_control_panel import DOMAIN as ALARM_PANEL_DOMAIN
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers import config_validation as cv, entity_platform
 
 # Use the HA core attributes, alarm states and services
 from homeassistant.components.alarm_control_panel.const import (
@@ -52,7 +52,7 @@ async def async_setup_entry(
         """Add Visonic Alarm Panel."""
         entities: list[SwitchEntity] = []
         entities.append(VisonicAlarm(hass, client, 1))
-        _LOGGER.debug(f"alarm control panel adding entity")
+        #_LOGGER.debug(f"alarm control panel adding entity")
         async_add_entities(entities, True)
 
     entry.async_on_unload(
@@ -70,7 +70,12 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
 
 #    _unrecorded_attributes = alarm.AlarmControlPanelEntity._unrecorded_attributes | frozenset({-})
     _attr_translation_key: str = "alarm_panel_key"
-    _attr_has_entity_name = True
+    #_attr_has_entity_name = True
+    _entity_component_unrecorded_attributes = frozenset(
+        {"Panel Model", "Watchdog Timeout (Total)", "Watchdog Timeout (Past 24 Hours)", "Download Timeout", 
+          "Download Message Retries", "Panel Problem Count", "Last Panel Problem Time", "Client Version",
+          "Exception Count", "Protocol Version", "Power Master" }
+    )
 
     def __init__(self, hass: HomeAssistant, client: VisonicClient, partition_id: int):
         """Initialize a Visonic security alarm."""
@@ -144,14 +149,14 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
                     return {
                         "manufacturer": "Visonic",
                         "identifiers": {(DOMAIN, self._myname)},
-                        "name": f"Visonic Alarm Panel {self._panel} (Partition {self._partition_id})",
+                        "name": f"{self._myname}",
                         "model": pm,
                         # "via_device" : (DOMAIN, "Visonic Intruder Alarm"),
                     }
         return {
             "manufacturer": "Visonic",
             "identifiers": {(DOMAIN, self._myname)},
-            "name": f"Visonic Alarm Panel {self._panel} (Partition {self._partition_id})",
+            "name": f"{self._myname}",
             "model": None,
             # "model": "Alarm Panel",
             # "via_device" : (DOMAIN, "Visonic Intruder Alarm"),
@@ -192,11 +197,8 @@ class VisonicAlarm(alarm.AlarmControlPanelEntity):
             elif data is not None:
                 self._device_state_attributes = data
             
-            if "lastevent" in self._device_state_attributes and len(self._device_state_attributes["lastevent"]) > 2:
-                pos = self._device_state_attributes["lastevent"].find('/')
-                #_LOGGER.debug(f"[alarm_control_panel]  {pos=}")
-                if pos > 2:
-                    self._last_triggered = self._device_state_attributes["lastevent"][0:pos]
+            if "lasteventname" in self._device_state_attributes and len(self._device_state_attributes["lasteventname"]) > 2:
+                self._last_triggered = self._device_state_attributes["lasteventname"]
 
     @property
     def state(self):

@@ -51,7 +51,7 @@ class VisonicSwitch(SwitchEntity):
     """Representation of a Visonic X10 Switch."""
 
     _attr_translation_key: str = "alarm_panel_key"
-    _attr_has_entity_name = True
+    #_attr_has_entity_name = True
 
     def __init__(self, hass: HomeAssistant, client: VisonicClient, visonic_device: AlSwitchDevice):
         """Initialise a Visonic X10 Device."""

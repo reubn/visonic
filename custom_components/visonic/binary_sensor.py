@@ -82,7 +82,7 @@ class VisonicBinarySensor(BinarySensorEntity):
     """Representation of a Visonic Sensor."""
 
     _attr_translation_key: str = "alarm_panel_key"
-    _attr_has_entity_name = True
+    #_attr_has_entity_name = True
 
     def __init__(self, hass, client: VisonicClient, sensor: AlSensorDevice, entry: VisonicConfigEntry):
         """Initialize the sensor."""
@@ -246,7 +246,7 @@ class VisonicBinarySensor(BinarySensorEntity):
                 attr["zone_open"] = self._visonic_device.isOpen()
             
             if stype != AlSensorType.UNKNOWN:
-                attr["sensor_type"] = titlecase(str(stype).lower())
+                attr["sensor_type"] = str(stype).lower()
             elif self._visonic_device.getRawSensorIdentifier() is not None:
                 attr["sensor_type"] = "Undefined " + str(self._visonic_device.getRawSensorIdentifier())
             else:
@@ -256,6 +256,7 @@ class VisonicBinarySensor(BinarySensorEntity):
             attr["zone_name"] = self._visonic_device.getZoneLocation()
             attr["zone_type"] = self._visonic_device.getZoneType()
             attr["zone_chime"] = self._visonic_device.getChimeType()
+            attr["zone_trouble"] = self._visonic_device.getProblem()
             
             if self.client.isPowerMaster() and self._visonic_device.getMotionDelayTime() is not None and len(str(self._visonic_device.getMotionDelayTime())) > 0:
                 attr["zone_motion_off_time"] = self._visonic_device.getMotionDelayTime()

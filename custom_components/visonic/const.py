@@ -128,15 +128,19 @@ available_emulation_modes = [
 
 # For alarm_control_panel and sensor, map the alarm panel states across to the Home Assistant states
 map_panel_status_to_ha_status = {
-    AlPanelStatus.UNKNOWN     : STATE_UNKNOWN,
-    AlPanelStatus.DISARMED    : STATE_ALARM_DISARMED,
-    AlPanelStatus.ARMING_HOME : STATE_ALARM_ARMING,
-    AlPanelStatus.ARMING_AWAY : STATE_ALARM_ARMING,
-    AlPanelStatus.ENTRY_DELAY : STATE_ALARM_PENDING,
-    AlPanelStatus.ARMED_HOME  : STATE_ALARM_ARMED_HOME,
-    AlPanelStatus.ARMED_AWAY  : STATE_ALARM_ARMED_AWAY,
-    AlPanelStatus.SPECIAL     : STATE_UNKNOWN,
-    AlPanelStatus.DOWNLOADING : STATE_UNKNOWN,
-    AlPanelStatus.INSTALLER   : STATE_UNKNOWN
+    AlPanelStatus.UNKNOWN             : STATE_UNKNOWN,
+    AlPanelStatus.DISARMED            : STATE_ALARM_DISARMED,
+    AlPanelStatus.ARMING_HOME         : STATE_ALARM_ARMING,
+    AlPanelStatus.ARMING_AWAY         : STATE_ALARM_ARMING,
+    AlPanelStatus.ENTRY_DELAY         : STATE_ALARM_PENDING,
+    AlPanelStatus.ENTRY_DELAY_INSTANT : STATE_ALARM_PENDING,
+    AlPanelStatus.ARMED_HOME          : STATE_ALARM_ARMED_HOME,
+    AlPanelStatus.ARMED_AWAY          : STATE_ALARM_ARMED_AWAY,
+    AlPanelStatus.ARMED_HOME_BYPASS   : STATE_ALARM_ARMED_HOME,
+    AlPanelStatus.ARMED_AWAY_BYPASS   : STATE_ALARM_ARMED_AWAY,
+    AlPanelStatus.ARMED_HOME_INSTANT  : STATE_ALARM_ARMED_HOME,
+    AlPanelStatus.ARMED_AWAY_INSTANT  : STATE_ALARM_ARMED_AWAY,
+    AlPanelStatus.USER_TEST           : STATE_UNKNOWN,
+    AlPanelStatus.DOWNLOADING         : STATE_UNKNOWN,
+    AlPanelStatus.INSTALLER           : STATE_UNKNOWN
 }
-

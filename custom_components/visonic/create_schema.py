@@ -121,7 +121,6 @@ class VisonicSchema:
             **self.CONFIG_SCHEMA_ETHERNET,
             **self.CONFIG_SCHEMA_USB,
             **self.create_parameters1(self.options),
-            **self.create_parameters2(self.options),
             **self.create_parameters10(self.options),
             **self.create_parameters11(self.options),
             **self.create_parameters12(self.options),
@@ -170,25 +169,10 @@ class VisonicSchema:
                 CONF_EMULATION_MODE,
                 default=self.create_default(options, CONF_EMULATION_MODE, available_emulation_modes[0]),
             ): vol.In(available_emulation_modes),
-        }
-
-    # These are only used on creation of the component and only for Powerlink
-    def create_parameters2(self, options: dict):
-        """Create parameter set 2."""
-        # Panel settings - can only be set on creation
-        return {
             vol.Optional(
                 CONF_DOWNLOAD_CODE, 
                 default=self.create_default(options, CONF_DOWNLOAD_CODE, "")
             ): str,
-#            vol.Optional(
-#                CONF_FORCE_AUTOENROLL,
-#                default=self.create_default(options, CONF_FORCE_AUTOENROLL, False),
-#            ): bool,
-#            vol.Optional(
-#                CONF_AUTO_SYNC_TIME,
-#                default=self.create_default(options, CONF_AUTO_SYNC_TIME, True),
-#            ): bool,
             vol.Optional(
                 CONF_EEPROM_ATTRIBUTES,
                 default=self.create_default(options, CONF_EEPROM_ATTRIBUTES, False),
@@ -233,9 +217,6 @@ class VisonicSchema:
         """Create parameter set 11."""
         # Panel settings - can be modified/edited
         return {
-            vol.Required(
-                CONF_LANGUAGE, default=self.create_default(options, CONF_LANGUAGE, "EN")
-            ): vol.In(["EN", "FR", "NL", "Panel"]),
             vol.Optional(
                 CONF_MOTION_OFF_DELAY,
                 default=self.create_default(options, CONF_MOTION_OFF_DELAY, 120),
@@ -293,7 +274,7 @@ class VisonicSchema:
 
     def create_parameters13(self, options: dict):
         """Create parameter set 13."""
-        # Log file parameters
+        # Log Event file parameters
         return {
             vol.Optional(
                 CONF_LOG_EVENT, default=self.create_default(options, CONF_LOG_EVENT, False)
@@ -337,10 +318,6 @@ class VisonicSchema:
     def create_schema_parameters1(self):
         """Create schema parameters 1."""
         return vol.Schema(self.create_parameters1(self.options))
-
-    def create_schema_parameters2(self):
-        """Create schema parameters 2."""
-        return vol.Schema(self.create_parameters2(self.options))
 
     def create_schema_parameters10(self):
         """Create schema parameters 10."""

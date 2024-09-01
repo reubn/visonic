@@ -61,7 +61,7 @@ class VisonicSensor(Entity):
     """Representation of a Visonic alarm control panel as a simple sensor for minimal."""
 
     _attr_translation_key: str = "alarm_panel_key"
-    _attr_has_entity_name = True
+    #_attr_has_entity_name = True
 
     def __init__(self, hass: HomeAssistant, client: VisonicClient, partition_id: int):
         """Initialize a Visonic security alarm."""
@@ -119,14 +119,14 @@ class VisonicSensor(Entity):
                     return {
                         "manufacturer": "Visonic",
                         "identifiers": {(DOMAIN, self._myname)},
-                        "name": f"Visonic Alarm Panel {self._panel} (Partition {self._partition_id})",
+                        "name": f"{self._myname}",
                         "model": pm,
                         # "via_device" : (DOMAIN, "Visonic Intruder Alarm"),
                     }
         return {
             "manufacturer": "Visonic",
             "identifiers": {(DOMAIN, self._myname)},
-            "name": f"Visonic Alarm Panel {self._panel} (Partition {self._partition_id})",
+            "name": f"{self._myname}",
             "model": None,
             # "model": "Alarm Panel",
             # "via_device" : (DOMAIN, "Visonic Intruder Alarm"),

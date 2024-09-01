@@ -4,7 +4,8 @@ import logging
 from typing import Callable, Any
 import re
 import socket
-from datetime import datetime, timezone
+import datetime
+from datetime import datetime, timedelta, timezone
 from jinja2 import Environment, FileSystemLoader
 from functools import partial
 import threading
@@ -19,6 +20,7 @@ from homeassistant.util import slugify
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.exceptions import HomeAssistantError, Unauthorized, UnknownUser
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.translation import async_translate_state
 from homeassistant.auth.permissions.const import POLICY_CONTROL, POLICY_READ
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -120,7 +122,7 @@ from .const import (
 #    "trigger",
 #]
 
-CLIENT_VERSION = "0.9.7.8"
+CLIENT_VERSION = "0.9.7.9"
 
 MAX_CLIENT_LOG_ENTRIES = 300
 
@@ -163,6 +165,87 @@ AlarmPanelEventActionList = {
    PanelCondition.CHECK_EVENT_LOG_COMMAND  : HA_Event_Type(ALARM_COMMAND_EVENT,           "eventlog"), 
    PanelCondition.CHECK_X10_COMMAND        : HA_Event_Type(ALARM_COMMAND_EVENT,           "x10")
 }
+
+##############################################################################################################################################################################################################################################
+##########################  Known Data Strings for EEPROM and Message Decode  ################################################################################################################################################################
+##############################################################################################################################################################################################################################################
+
+# Use English as the default values unless updated by the settings from the Integration
+pmLogEvent_t = [
+   "None",
+   # 1
+   "Interior Alarm", "Perimeter Alarm", "Delay Alarm", "24h Silent Alarm", "24h Audible Alarm",
+   "Tamper", "Control Panel Tamper", "Tamper Alarm", "Tamper Alarm", "Communication Loss",
+   "Panic From Keyfob", "Panic From Control Panel", "Duress", "Confirm Alarm", "General Trouble",
+   "General Trouble Restore", "Interior Restore", "Perimeter Restore", "Delay Restore", "24h Silent Restore",
+   # 21
+   "24h Audible Restore", "Tamper Restore", "Control Panel Tamper Restore", "Tamper Restore", "Tamper Restore",
+   "Communication Restore", "General Restore", "Cancel Alarm", "Trouble Restore", "Not used",
+   "Recent Close", "Fire", "Fire Restore", "Not Active", "Emergency",
+   "Remove User", "Disarm Latchkey", "Confirm Alarm Emergency", "Supervision (Inactive)", "Supervision Restore (Active)",
+   "Low Battery", "Low Battery Restore", "AC Fail", "AC Restore", "Control Panel Low Battery",
+   "Control Panel Low Battery Restore", "RF Jamming", "RF Jamming Restore", "Communications Failure", "Communications Restore",
+   # 51
+   "Telephone Line Failure", "Telephone Line Restore", "Auto Test", "Fuse Failure", "Fuse Restore",
+   "Keyfob Low Battery", "Keyfob Low Battery Restore", "Engineer Reset", "Battery Disconnect", "1-Way Keypad Low Battery",
+   "1-Way Keypad Low Battery Restore", "1-Way Keypad Inactive", "1-Way Keypad Restore Active", "Low Battery Ack", "Clean Me",
+   "Fire Trouble", "Low Battery", "Battery Restore", "AC Fail", "AC Restore",
+   "Supervision (Inactive)", "Supervision Restore (Active)", "Gas Alert", "Gas Alert Restore", "Gas Trouble",
+   "Gas Trouble Restore", "Flood Alert", "Flood Alert Restore", "X-10 Trouble", "X-10 Trouble Restore",
+   # 81
+   "Armed Home", "Armed Away", "Quick Armed Home", "Quick Armed Away", "Disarmed",
+   "Fail To Auto-Arm", "Enter To Test Mode", "Exit From Test Mode", "Force Arm", "Auto Arm",
+   "Instant Arm", "Bypass", "Fail To Arm", "Door Open", "Communication Established By Control Panel",
+   "System Reset", "Installer Programming", "Wrong Password", "Not Sys Event", "Not Sys Event",
+   # 101
+   "Extreme Hot Alert", "Extreme Hot Alert Restore", "Freeze Alert", "Freeze Alert Restore", "Human Cold Alert",
+   "Human Cold Alert Restore", "Human Hot Alert", "Human Hot Alert Restore", "Temperature Sensor Trouble", "Temperature Sensor Trouble Restore",
+
+   # New values for PowerMaster and models with partitions
+   "PIR Mask", "PIR Mask Restore", "Repeater low battery", "Repeater low battery restore", "Repeater inactive",
+   "Repeater inactive restore", "Repeater tamper", "Repeater tamper restore", "Siren test end", "Devices test end",
+   # 121
+   "One way comm. trouble", "One way comm. trouble restore", "Sensor outdoor alarm", "Sensor outdoor restore", "Guard sensor alarmed",
+   "Guard sensor alarmed restore", "Date time change", "System shutdown", "System power up", "Missed Reminder",
+   "Pendant test fail", "Basic KP inactive", "Basic KP inactive restore", "Basic KP tamper", "Basic KP tamper Restore",
+   "Heat", "Heat restore", "LE Heat Trouble", "CO alarm", "CO alarm restore",
+   # 141
+   "CO trouble", "CO trouble restore", "Exit Installer", "Enter Installer", "Self test trouble",
+   "Self test restore", "Confirm panic event", "", "Soak test fail", "Fire Soak test fail",
+   "Gas Soak test fail", "", "", "", "", "", "", "", "", 
+]
+
+# TODO:  Populate the 2 "stop" columns by using pmPanelConfig_t
+# Default "Panel" to English
+en_keys = ["system", "zone", "fob", "user", "pad", "siren", "2pad", "x10", "pgm", "gsm", "powerlink", "ptag", "repeater", "undefined"]
+
+pmLogPowerColl = collections.namedtuple("pmLogPowerColl", 'key name pmax_include pmax_autonumber pmax_start pmax_stop pmas_include pmas_autonumber pmas_start pmas_stop' )
+pmLogPower = [                                                                                                                # powermax   powermaster  
+   pmLogPowerColl( en_keys[0]  , "System" ,         True, False, 0,  0 ,         True,  False, 0,  0 ), #     0           0  System   
+   pmLogPowerColl( en_keys[1]  , "Zone"   ,         True,  True, 1, 30 ,         True,   True, 1, 64 ), #     1           1  Zone     
+   pmLogPowerColl( en_keys[2]  , "Fob"    ,         True,  True, 1,  8 ,         True,   True, 1, 32 ), #    31          65  Fob      
+   pmLogPowerColl( en_keys[3]  , "User"   ,         True,  True, 1,  8 ,         True,   True, 1, 48 ), #    39          97  User     
+   pmLogPowerColl( en_keys[4]  , "Pad"    ,         True,  True, 1,  8 ,         True,   True, 1, 32 ), #    47         145  Pad      
+   pmLogPowerColl( en_keys[5]  , "Sir"    ,         True,  True, 1,  2 ,         True,   True, 1,  8 ), #    55         177  Sir      
+   pmLogPowerColl( en_keys[6]  , "2Pad"   ,         True,  True, 1,  4 ,         True,   True, 1,  4 ), #    57         185  2PAD     
+   pmLogPowerColl( en_keys[7]  , "X10"    ,         True,  True, 1, 15 ,         True,   True, 1, 15 ), #    61         189  X10      
+   pmLogPowerColl( en_keys[8]  , "PGM"    ,         True, False, 0,  0 ,         True,  False, 0,  0 ), #    76         204  PGM      
+   pmLogPowerColl( en_keys[9]  , "GSM"    ,         True, False, 0,  0 ,        False,  False, 0,  0 ), #    77            - GSM
+   pmLogPowerColl( en_keys[10] , "P-LINK" ,         True, False, 0,  0 ,         True,  False, 0,  0 ), #    78         205  P-LINK   
+   pmLogPowerColl( en_keys[11] , "PTag"   ,         True,  True, 1,  8 ,         True,   True, 1, 32 ), #    79         206  PTag     
+   pmLogPowerColl( en_keys[12] , "Rptr"   ,        False, False, 0,  0 ,         True,   True, 1,  8 ), #     -         238  Rptr     
+   pmLogPowerColl( en_keys[13] , "Unknown",         True, False, 1, 41 ,         True,  False, 1, 10 )  #    87         246  Unknown  
+]
+
+# Create the defaults in English to be updated by settings from the Integration
+pmLogPowerMaxUser_t = []
+pmLogPowerMasterUser_t = []
+for v in pmLogPower:
+    # create list
+    if v.pmax_include:
+        pmLogPowerMaxUser_t.extend([f"{v.name} {i:>02}" if v.pmax_autonumber else v.name for i in range(v.pmax_start, v.pmax_stop+1)])
+    if v.pmas_include:
+        pmLogPowerMasterUser_t.extend([f"{v.name} {i:>02}" if v.pmas_autonumber else v.name for i in range(v.pmas_start, v.pmas_stop+1)])
 
 class MyTransport(AlTransport):
 
@@ -226,6 +309,10 @@ class VisonicClient:
         self._initialise()
         self.logstate_info(f"Exclude sensor list = {self.exclude_sensor_list}     Exclude x10 list = {self.exclude_x10_list}")
         
+    # get the current date and time
+    def _getTimeFunction(self) -> datetime:
+        return datetime.now(timezone.utc).astimezone()
+
     def _initialise(self):
         # panel connection
         self.logstate_debug("reset client panel variables")
@@ -267,6 +354,10 @@ class VisonicClient:
         self.DisableAllCommands = False
 
         self._setupSensorDelays()
+
+        self.PanelLastEventName = "Startup"
+        self.PanelLastEventAction = "Startup"
+        self.PanelLastEventTime = self._getTimeFunction().strftime("%d/%m/%Y, %H:%M:%S")
 
         # Process the exclude sensor list
         self.exclude_sensor_list = self.config.get(CONF_EXCLUDE_SENSOR)
@@ -350,7 +441,7 @@ class VisonicClient:
 
     def getAlarmPanelUniqueIdent(self):
         if self.getPanelID() > 0:
-            return VISONIC_UNIQUE_NAME + " Panel " + str(self.getPanelID())
+            return VISONIC_UNIQUE_NAME + "_" + str(self.getPanelID())
         return VISONIC_UNIQUE_NAME
 
     def createNotification(self, condition : AvailableNotifications, message: str):
@@ -472,6 +563,10 @@ class VisonicClient:
                 include_extended_status = self.toBool(self.config.get(CONF_EEPROM_ATTRIBUTES, False))
             pd = self.visonicProtocol.getPanelStatusDict(include_extended_status)
             #self.logstate_debug("Client Dict {0}".format(pd))
+            pd["lastevent"] = self.PanelLastEventName + "/" + self.PanelLastEventAction
+            pd["lasteventname"] = self.PanelLastEventName
+            pd["lasteventaction"] = self.PanelLastEventAction
+            pd["lasteventtime"] = self.PanelLastEventTime
             pd["Client Version"] = CLIENT_VERSION
             return pd
         return {}
@@ -576,6 +671,18 @@ class VisonicClient:
             self.toBool(self.config.get(CONF_LOG_EVENT))
             and entry.current <= total
         ):  
+            eventStr = "Unknown"
+            if 0 <= entry.event <= 159:
+                if len(pmLogEvent_t[entry.event]) > 0:
+                    eventStr = pmLogEvent_t[entry.event]
+                else:
+                    self.logstate_debug(f"[process_panel_event_log] Found unknown log event {entry.event}")
+
+            if self.isPowerMaster(): # PowerMaster models
+                zoneStr = pmLogPowerMasterUser_t[entry.zone] or "Unknown"
+            else:
+                zoneStr = pmLogPowerMaxUser_t[entry.zone] or "Unknown"
+
             self._fireHAEvent(
                 event_id = PanelCondition.PANEL_LOG_ENTRY, 
                 datadictionary = {"current": current,
@@ -583,8 +690,8 @@ class VisonicClient:
                                   "date": entry.date,
                                   "time": entry.time,
                                   "partition": entry.partition,
-                                  "zone": entry.zone,
-                                  "event": entry.event,
+                                  "zone": zoneStr,
+                                  "event": eventStr,
                 }
             )
             #self.logstate_debug("Panel Event Log - fired Single Item event")
@@ -822,9 +929,34 @@ class VisonicClient:
         #_LOGGER.debug("onSwitchChange {0}".format(switch))
         pass
 
+
     # This can be called from this module but it is also the callback handler for the connection
     def onPanelChangeHandler(self, event_id: AlCondition | PanelCondition, data : dict):
         """Generate HA Bus Event and Send Notification to Frontend."""
+        
+        if event_id == AlCondition.PANEL_UPDATE and data is not None and len(data) == 3:
+            if data["name"] >= 0:
+                d = {}
+                d["name"] = "Unknown"
+                d["event"] = "Unknown"
+                if self.isPowerMaster():
+                    d["name"] = pmLogPowerMasterUser_t[data["name"]] or "Unknown"
+                else:
+                    d["name"] = pmLogPowerMaxUser_t[int(data["name"] & 0x7F)] or "Unknown"
+                if 0 <= data["event"] <= 159:
+                    if len(pmLogEvent_t[data["event"]]) > 0:
+                        d["event"] = pmLogEvent_t[data["event"]]
+                if self.PanelLastEventName == d["name"] and self.PanelLastEventAction == d["event"]:   # exactly the same event as last time then do not send it
+                    self.logstate_debug(f"[onPanelChangeHandler] Translated panel event log data {data} to {d} is the same as last time so not sending event")
+                    return
+                self.PanelLastEventName = d["name"]
+                self.PanelLastEventAction = d["event"]
+                self.PanelLastEventTime = data["time"]
+                self.logstate_debug(f"[onPanelChangeHandler] Translated panel event log data {data} to {d}")
+                data = d
+            else:
+                self.logstate_warning(f"[onPanelChangeHandler] Cannot translate panel event log data {data}")
+                return
         
         self._fireHAEvent(event_id = event_id, datadictionary = data if data is not None else {} )
 
@@ -877,6 +1009,47 @@ class VisonicClient:
     def getConfigData(self) -> PanelConfig:
         """Create a dictionary full of the configuration data."""
 
+        # Retrieve the names of the things that create the actions from the language translations files
+        en_vals = { key : async_translate_state(hass=self.hass, 
+                                                 domain="visonic",
+                                                 device_class="event_name",
+                                                 state=key, 
+                                                 platform=None,
+                                                 translation_key=None)
+                    for key in en_keys }
+
+        #self.logstate_debug(f"[getConfigData] alarm control panel event_names translations {en_vals}")
+
+        pmLogPowerMaxUser_t = []
+        pmLogPowerMasterUser_t = []
+        for v in pmLogPower:
+            # Use the translation if in the list else default back to the English.  
+            #     The translation file does not need to contain all 14 translations
+            w = en_vals[v.key] if v.key in en_vals else v.name     # get the translation
+            # create list
+            if v.pmax_include:
+                pmLogPowerMaxUser_t.extend([f"{w} {i:>02}" if v.pmax_autonumber else w for i in range(v.pmax_start, v.pmax_stop+1)])
+            if v.pmas_include:
+                pmLogPowerMasterUser_t.extend([f"{w} {i:>02}" if v.pmas_autonumber else w for i in range(v.pmas_start, v.pmas_stop+1)])
+                
+        self.logstate_debug(f"[getConfigData] Replacing default English names with provided list:")
+        self.logstate_debug(f"[getConfigData]       pmLogPowerMaxUser_t    = {pmLogPowerMaxUser_t}")
+        self.logstate_debug(f"[getConfigData]       pmLogPowerMasterUser_t = {pmLogPowerMasterUser_t}")
+
+        # Retrieve the actions from the language translations files
+        for key in range(1, len(pmLogEvent_t)+1):
+            state = f"{key:0>3}"
+            tx_s = async_translate_state(hass=self.hass, 
+                                         domain="visonic",
+                                         device_class="event_action",
+                                         state=state, 
+                                         platform=None,
+                                         translation_key=None)
+            if tx_s != state:     # Check to see if it's just returned the state that I passed in i.e. to make sure the translation exists
+                pmLogEvent_t[key] = tx_s
+        
+        self.logstate_debug(f"[getConfigData] alarm control panel event_action translated {pmLogEvent_t}")
+
         v = self.config.get(CONF_EMULATION_MODE, available_emulation_modes[0])        
         self.ForceStandardMode = v == available_emulation_modes[1]
         self.DisableAllCommands = v == available_emulation_modes[2]
@@ -889,13 +1062,12 @@ class VisonicClient:
         #     self.ForceStandardMode and self.DisableAllCommands are True --> The integration interacts with the panel but commands such as arm/disarm/log/bypass are not allowed
         # The if statement above ensure these are the only supported combinations.
 
-        self.logstate_debug(f"Emulation Mode {self.config.get(CONF_EMULATION_MODE)}   so setting    ForceStandard to {self.ForceStandardMode}     DisableAllCommands to {self.DisableAllCommands}")
+        self.logstate_debug(f"[getConfigData] Emulation Mode {self.config.get(CONF_EMULATION_MODE)} so setting ForceStandard to {self.ForceStandardMode}, DisableAllCommands to {self.DisableAllCommands}")
 
         return {
             AlConfiguration.DownloadCode: self.config.get(CONF_DOWNLOAD_CODE, ""),
             AlConfiguration.ForceStandard: self.ForceStandardMode,
             AlConfiguration.DisableAllCommands: self.DisableAllCommands,
-            AlConfiguration.PluginLanguage: self.config.get(CONF_LANGUAGE, "EN"),
             AlConfiguration.SirenTriggerList: self.config.get(CONF_SIREN_SOUNDING, ["Intruder"])
         }
 
@@ -956,7 +1128,7 @@ class VisonicClient:
             
             # Avoid the panel codes that we're not interested in, if these are set then we have no business doing any of the functions
             #    After this we can simply use DISARMED and not DISARMED for all the armed states
-            if psc == AlPanelStatus.UNKNOWN or psc == AlPanelStatus.SPECIAL or psc == AlPanelStatus.DOWNLOADING:
+            if psc == AlPanelStatus.UNKNOWN or psc == AlPanelStatus.USER_TEST or psc == AlPanelStatus.DOWNLOADING:
                 return False, None   # Return invalid as panel not in correct state to do anything
             
             if panelmode == AlPanelMode.STANDARD:

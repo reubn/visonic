@@ -95,17 +95,17 @@ from enum import IntEnum
 from string import punctuation
 
 try:
-    from .pyconst import (AlTransport, AlPanelDataStream, NO_DELAY_SET, PanelConfig, AlConfiguration, AlPanelMode, AlPanelCommand, AlTroubleType, 
+    from .pyconst import (AlTransport, AlPanelDataStream, NO_DELAY_SET, PanelConfig, AlConfiguration, AlPanelMode, AlPanelCommand, AlTroubleType, AlPanelEventData, 
                           AlAlarmType, AlPanelStatus, AlSensorCondition, AlCommandStatus, AlX10Command, AlCondition, AlLogPanelEvent, AlSensorType)
-    from .pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, pmPanelTroubleType_t, pmPanelAlarmType_t, AlPanelInterfaceHelper, 
+    from .pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, AlPanelInterfaceHelper, 
                            AlSensorDeviceHelper, AlSwitchDeviceHelper)
 except:
-    from pyconst import (AlTransport, AlPanelDataStream, NO_DELAY_SET, PanelConfig, AlConfiguration, AlPanelMode, AlPanelCommand, AlTroubleType, 
+    from pyconst import (AlTransport, AlPanelDataStream, NO_DELAY_SET, PanelConfig, AlConfiguration, AlPanelMode, AlPanelCommand, AlTroubleType, AlPanelEventData,
                          AlAlarmType, AlPanelStatus, AlSensorCondition, AlCommandStatus, AlX10Command, AlCondition, AlLogPanelEvent, AlSensorType)
-    from pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, pmPanelTroubleType_t, pmPanelAlarmType_t, AlPanelInterfaceHelper, 
+    from pyhelper import (toString, MyChecksumCalc, AlImageManager, ImageRecord, titlecase, AlPanelInterfaceHelper, 
                           AlSensorDeviceHelper, AlSwitchDeviceHelper)
 
-PLUGIN_VERSION = "1.4.1.1"
+PLUGIN_VERSION = "1.4.1.2"
 
 # Obfuscate sensitive data, regardless of the other Debug settings.
 #     Setting this to True limits the logging of messages sent to the panel to CMD or NONE
@@ -119,13 +119,13 @@ class DebugLevel(IntEnum):
 # Debug Settings (what information to put in the log files) - Sending Messages to the Panel
 SendDebugC = DebugLevel.CMD   # Debug sending control messages
 SendDebugM = DebugLevel.CMD   # Debug sending message data
-SendDebugD = DebugLevel.NONE  # Debug sending EPROM message data
+SendDebugD = DebugLevel.CMD   # Debug sending EPROM message data
 SendDebugI = DebugLevel.NONE  # Debug sending image data
 
 # Debug Settings (what information to put in the log files) - Receiving Messages from the Panel
 RecvDebugC = DebugLevel.CMD   # Debug incoming control messages
 RecvDebugM = DebugLevel.CMD   # Debug incoming message data
-RecvDebugD = DebugLevel.NONE  # Debug incoming EPROM message data
+RecvDebugD = DebugLevel.CMD  # Debug incoming EPROM message data
 RecvDebugI = DebugLevel.NONE  # Debug incoming image data
 
 # Some constants to help readability of the code
@@ -344,7 +344,6 @@ pmSendMsg = {
    "MSG_PL_BRIDGE"    : VisonicCommand(convertByteArray('E1 99 99 43'),                                  None   , False, False,      SendDebugM, 0.0, "Powerlink Bridge" ),                 # Command to the Bridge
 }
 
-
 # B0 Messages subset that we can send to a Powermaster, embed within MSG_POWERMASTER to use
 pmSendMsgB0_t = {
    "ZONE_STAT04"           : 0x04,
@@ -414,19 +413,19 @@ pmReceiveMsg_t = {
    0x0B     : PanelCallBack(  0, False, False,  0, 0, False, DebugLevel.FULL,                          "Loopback Test" ),       # THE PANEL DOES NOT SEND THIS. THIS IS USED FOR A LOOP BACK TEST
    0x0F     : PanelCallBack(  0,  True, False,  0, 0, False,      RecvDebugC,                          "Exit Download" ),       # The panel may send this during download to tell us to exit download 
    0x22     : PanelCallBack( 14,  True, False,  0, 0, False, DebugLevel.FULL,                          "Not Used" ),            # 14 Panel Info (older visonic powermax panels so not used by this integration)
-   0x25     : PanelCallBack( 14,  True, False,  0, 0, False, DebugLevel.CMD  if OBFUS else RecvDebugD, "Download Retry" ),     # 14 Download Retry
-   0x33     : PanelCallBack( 14,  True, False,  0, 0, False, DebugLevel.NONE if OBFUS else RecvDebugD, "Download Settings" ),  # 14 Download Settings
-   0x3C     : PanelCallBack( 14,  True, False,  0, 0, False, DebugLevel.FULL,                          "Panel Info" ),         # 14 Panel Info
-   0x3F     : PanelCallBack(  7,  True,  True,  4, 5, False, DebugLevel.CMD  if OBFUS else RecvDebugD, "Download Block" ),     # Download Info in varying lengths  (For variable length, the length is the fixed number of bytes). This contains panel data so don't log it.
-   0xA0     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Event Log" ),           # 15 Event Log
-   0xA3     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Zone Names" ),          # 15 Zone Names
-   0xA5     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Status Update" ),       # 15 Status Update       Length was 15 but panel seems to send different lengths
-   0xA6     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Zone types" ),          # 15 Zone Types
-   0xA7     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Panel Status" ),        # 15 Panel Status Change
-   0xAB     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugC,                          "Powerlink" ),           # 15 Enroll Request 0x0A  OR Ping 0x03      Length was 15 but panel seems to send different lengths
+   0x25     : PanelCallBack( 14,  True, False,  0, 0, False, DebugLevel.CMD  if OBFUS else RecvDebugD, "Download Retry" ),      # 14 Download Retry
+   0x33     : PanelCallBack( 14,  True, False,  0, 0, False, DebugLevel.NONE if OBFUS else RecvDebugD, "Download Settings" ),   # 14 Download Settings
+   0x3C     : PanelCallBack( 14,  True, False,  0, 0, False, DebugLevel.FULL,                          "Panel Info" ),          # 14 Panel Info
+   0x3F     : PanelCallBack(  7,  True,  True,  4, 5, False, DebugLevel.CMD  if OBFUS else RecvDebugD, "Download Block" ),      # Download Info in varying lengths  (For variable length, the length is the fixed number of bytes). This contains panel data so don't log it.
+   0xA0     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Event Log (A0)" ),      # 15 Event Log
+   0xA3     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Zone Names (A3)" ),     # 15 Zone Names
+   0xA5     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Status Update (A5)" ),  # 15 Status Update       Length was 15 but panel seems to send different lengths
+   0xA6     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Zone types (A6)" ),     # 15 Zone Types
+   0xA7     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugM,                          "Panel Status (A7)" ),   # 15 Panel Status Change
+   0xAB     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugC,                          "Powerlink (AB)" ),      # 15 Enroll Request 0x0A  OR Ping 0x03      Length was 15 but panel seems to send different lengths
    0xAC     : PanelCallBack( 15,  True, False,  0, 0, False,      RecvDebugC,                          "X10 Names" ),           # 15 X10 Names
    0xAD     : PanelCallBack( 15,  True, False,  0, 0, False, DebugLevel.CMD  if OBFUS else RecvDebugI, "JPG Mgmt" ),            # 15 Panel responds with this when we ask for JPG images
-   0xB0     : PanelCallBack(  8,  True,  True,  4, 2, False, DebugLevel.CMD  if OBFUS else RecvDebugM, "PowerMaster" ),         # The B0 message comes in varying lengths, sometimes it is shorter than what it states and the CRC is sometimes wrong
+   0xB0     : PanelCallBack(  8,  True,  True,  4, 2, False, DebugLevel.CMD  if OBFUS else RecvDebugM, "PowerMaster (B0)" ),    # The B0 message comes in varying lengths, sometimes it is shorter than what it states and the CRC is sometimes wrong
    REDIRECT : PanelCallBack(  5, False,  True,  2, 0, False, DebugLevel.FULL,                          "Redirect" ),            # TESTING: These are redirected Powerlink messages. 0D C0 len <data> cs 0A   so 5 plus the original data length
    VISPROX  : PanelCallBack( 11, False, False,  0, 0, False, DebugLevel.FULL,                          "Proxy" ),               # VISPROX : Interaction with Visonic Proxy
    # The F1 message needs to be ignored, I have no idea what it is but the crc is always wrong and only Powermax+ panels seem to send it. Assume a minimum length of 9, a variable length and ignore the checksum calculation.
@@ -438,250 +437,6 @@ pmReceiveMsg_t = {
             0x15 : PanelCallBack( 13, False, False,  0, 0,  True, RecvDebugI,                          "Image Unknown" ) 
           }
 }
-
-##############################################################################################################################################################################################################################################
-##########################  Known Data Strings for EEPROM and Message Decode  ################################################################################################################################################################
-##############################################################################################################################################################################################################################################
-
-
-"""
- b' AWAY  , ARMING HOME  ,  * BYPASS *  ,CALL ENGINEER ,RESET REQUIRED,TECHNISTOR RES,P1:  P2:  P3: ,RNAHED-*********'
- b'FIXED ALRM IN :TMPR ALRM IN  :OPEN ZONES    :LOW BAT.ZONES :ZONES MISSING :TMPR OPEN IN  :NEED TO CLEAN :TRUBLE I'
- b'N     :AC FAIL IN    :X-10 ACTIV IN :X-10 TRBL  IN :SYSTEM STATUS :SYSTEM TRBLS  :GSM UNIT EVNTS:FRZR ALERT IN :'
- b'FRZ ALERT IN  :COLD ALERT IN :HOT ALERT IN  :MASK.DETECT.IN:SOAK T.FAIL IN:AC FAIL       ,LOW BATTERY   ,NO ACTIVI'
- b'TY   ,FUSE FAILURE  ,LINE FAILURE  ,COMMUNIC.FAIL ,TAMPER OPEN   ,JAMMING       ,NEW VOICE MSG ,MISSING       ,T'
- b'AMPER ALARM  ,NET FAILURE   ,RSSI LOW      ,KEYFOB        -REM.COMMANDER -WIRELESS SIREN-WIRELESS KPAD - - GAS ***'
- b'***** - FLOOD ****** - EMERGENCY ** - FIRE ******* - GAS ALERT ** - FLOOD ALERT* - FIRE SENSOR* - GAS SENSOR * -'
- b' TEMP SENSOR, - HEAT ******* - HEAT SENSOR*REPEATER      - - CO ********* - CO ALERT *** - CO SENSOR **SIM NOT VER'
- b'IFY*GPRS NET FAIL
-
-
-ALARMED, ALARMED, ALARMED, ALARMED, ALARMED, 
-TAMPER-ALARM, SYS. TAMPER, TAMPER-ALARM, ADD USER, COMM. LOSS, 
-PANIC, PANIC, DURESS, CONFRM ALARM, SUCCESSFUL U/L,
-??? , RESTORE, RESTORE, RESTORE, RESTORE, 
-
-RESTORE, TAMPER-REST., SYS. TAMPER OK, TAMPER-REST., , 
-COMM.RESTORE, CANCEL-ALARM, GENERAL RESTORE, FIRE TRB RES, SYS INACTIVE, 
-RECENT CLOSE, FIRE, FIRE REST., NOT ACTIVE, EMERGENCY, 
-REMOVE USER, DISARM LATCH, PANIC-RESTOR, MISSING, ACTIVE, 
-LOW BATTERY, BATTERY OK, AC FAILURE, AC RESTORE, CPU LOW BATTERY, 
-CPU BATTERY OK, SYSTEM JAMMED, RF RESTORE, COMM. FAILURE, COMM. RESTORE, 
-
-TEL LINE FAILURE, TEL LINE RESTORE, AUTO TEST, FUSE FAILURE, FUSE RESTORE, 
-LOW BATTERY, BATTERY OK, ENGINEER RESET, BATT. DISCONNECT, LOW BATTERY, 
-BATTERY OK, MISSING, ACTIVE, KF LOW BATT. ACK, FIRE CLEAN, 
-FIRE TRBL., LOW BATTERY, BATTERY OK, AC FAIL, AC FAIL RES, 
-MISSING, ACTIVE, GAS ALERT, GAS RESTORE, GAS TROUBLE, 
-GAS TRBL RES, FLOOD ALERT, FLOOD RES, TROUBLE, TROUBLE-REST, 
-
-ARM HOME, ARM AWAY, QUICK HOME, QUICK AWAY, DISARM, 
-FAIL TO ARM, ENTER TEST, EXIT TEST, FORCE ARM, AUTO ARM AWAY, 
-INSTANT, BYPASS, FAIL TO SET, DOOR OPEN, LOADER, 
-SYSTEM RESET, ENTER INSTALLER, WRONG PASSWORD, , , 
-
-FRZR ALERT, FRZR RESTORE, FRZ ALERT, FRZ RESTORE, COLD ALERT, 
-COLD RESTORE, HOT ALERT, HOT RESTORE, PROB.TRBL, PROB.TRBL RS, 
-
-MASK. DETECT, MASK.RESTORE, LOW BATTERY, BATTERY OK, MISSING, 
-ACTIVE, TAMPER-ALARM, TAMPER-REST., SRNS TST END, DVCS TST END,
-
-??? , ???, ALARMED, RESTORE, ALARMED, 
-RESTORE, , , , ,
-??? , MISSING, ACTIVE, TAMPER-ALARM, TAMPER-REST., 
-HEAT, HEAT REST., , CO ALERT, CO RESTORE, 
-
-CO TROUBLE, CO TRBL RES, , , S.TEST TRBL, 
-S.TST TRBL RSTR, CNFRM PANIC, , SOAK T. FAIL, SOAK T. FAIL, 
-SOAK T. FAIL, , , , , , , , , 
-"""
-
-pmZoneName_t_EN = (
-           "None",
-           # 1
-           "Interior Alarm", "Perimeter Alarm", "Delay Alarm", "24h Silent Alarm", "24h Audible Alarm",
-           "Tamper", "Control Panel Tamper", "Tamper Alarm", "Tamper Alarm", "Communication Loss",
-           "Panic From Keyfob", "Panic From Control Panel", "Duress", "Confirm Alarm", "General Trouble",
-           "General Trouble Restore", "Interior Restore", "Perimeter Restore", "Delay Restore", "24h Silent Restore",
-           # 21
-           "24h Audible Restore", "Tamper Restore", "Control Panel Tamper Restore", "Tamper Restore", "Tamper Restore",
-           "Communication Restore", "Cancel Alarm", "General Restore", "Trouble Restore", "Not used",
-           "Recent Close", "Fire", "Fire Restore", "Not Active", "Emergency",
-           "Remove User", "Disarm Latchkey", "Confirm Alarm Emergency", "Supervision (Inactive)", "Supervision Restore (Active)",
-           "Low Battery", "Low Battery Restore", "AC Fail", "AC Restore", "Control Panel Low Battery",
-           "Control Panel Low Battery Restore", "RF Jamming", "RF Jamming Restore", "Communications Failure", "Communications Restore",
-           # 51
-           "Telephone Line Failure", "Telephone Line Restore", "Auto Test", "Fuse Failure", "Fuse Restore",
-           "Keyfob Low Battery", "Keyfob Low Battery Restore", "Engineer Reset", "Battery Disconnect", "1-Way Keypad Low Battery",
-           "1-Way Keypad Low Battery Restore", "1-Way Keypad Inactive", "1-Way Keypad Restore Active", "Low Battery Ack", "Clean Me",
-           "Fire Trouble", "Low Battery", "Battery Restore", "AC Fail", "AC Restore",
-           "Supervision (Inactive)", "Supervision Restore (Active)", "Gas Alert", "Gas Alert Restore", "Gas Trouble",
-           "Gas Trouble Restore", "Flood Alert", "Flood Alert Restore", "X-10 Trouble", "X-10 Trouble Restore",
-           # 81
-           "Arm Home", "Arm Away", "Quick Arm Home", "Quick Arm Away", "Disarm",
-           "Fail To Auto-Arm", "Enter To Test Mode", "Exit From Test Mode", "Force Arm", "Auto Arm",
-           "Instant Arm", "Bypass", "Fail To Arm", "Door Open", "Communication Established By Control Panel",
-           "System Reset", "Installer Programming", "Wrong Password", "Not Sys Event", "Not Sys Event",
-           # 101
-           "Extreme Hot Alert", "Extreme Hot Alert Restore", "Freeze Alert", "Freeze Alert Restore", "Human Cold Alert",
-           "Human Cold Alert Restore", "Human Hot Alert", "Human Hot Alert Restore", "Temperature Sensor Trouble", "Temperature Sensor Trouble Restore",
-
-           # New values for PowerMaster and models with partitions
-           "PIR Mask", "PIR Mask Restore", "Repeater low battery", "Repeater low battery restore", "Repeater inactive",
-           "Repeater inactive restore", "Repeater tamper", "Repeater tamper restore", "Siren test end", "Devices test end",
-           # 121
-           "One way comm. trouble", "One way comm. trouble restore", "Sensor outdoor alarm", "Sensor outdoor restore", "Guard sensor alarmed",
-           "Guard sensor alarmed restore", "Date time change", "System shutdown", "System power up", "Missed Reminder",
-           "Pendant test fail", "Basic KP inactive", "Basic KP inactive restore", "Basic KP tamper", "Basic KP tamper Restore",
-           "Heat", "Heat restore", "LE Heat Trouble", "CO alarm", "CO alarm restore",
-           # 141
-           "CO trouble", "CO trouble restore", "Exit Installer", "Enter Installer", "Self test trouble",
-           "Self test restore", "Confirm panic event", "n/a", "Soak test fail", "Fire Soak test fail",
-           "Gas Soak test fail", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a" )
-
-# Log Events
-pmLogEvent_t = {
-   "EN" : pmZoneName_t_EN,
-   "NL" : (
-           "Geen",
-           # 1
-           "In alarm", "In alarm", "In alarm", "In alarm", "In alarm",
-           "Sabotage alarm", "Systeem sabotage", "Sabotage alarm", "Add user", "Communicate fout",
-           "Paniekalarm", "Code bedieningspaneel paniek", "Dwang", "Bevestig alarm", "Successful U/L",
-           "Probleem herstel", "Herstel", "Herstel", "Herstel", "Herstel",
-           "Herstel", "Sabotage herstel", "Systeem sabotage herstel", "Sabotage herstel", "Sabotage herstel",
-           "Communicatie herstel", "Stop alarm", "Algemeen herstel", "Brand probleem herstel", "Systeem inactief",
-           "Recent close", "Brand", "Brand herstel", "Niet actief", "Noodoproep",
-           "Remove user", "Controleer code", "Bevestig alarm", "Supervisie", "Supervisie herstel",
-           "Batterij laag", "Batterij OK", "230VAC uitval", "230VAC herstel", "Controlepaneel batterij laag",
-           "Controlepaneel batterij OK", "Radio jamming", "Radio herstel", "Communicatie mislukt", "Communicatie hersteld",
-           # 51
-           "Telefoonlijn fout", "Telefoonlijn herstel", "Automatische test", "Zekeringsfout", "Zekering herstel",
-           "Batterij laag", "Batterij OK", "Monteur reset", "Accu vermist", "Batterij laag",
-           "Batterij OK", "Supervisie", "Supervisie herstel", "Lage batterij bevestiging", "Reinigen",
-           "Probleem", "Batterij laag", "Batterij OK", "230VAC uitval", "230VAC herstel",
-           "Supervisie", "Supervisie herstel", "Gas alarm", "Gas herstel", "Gas probleem",
-           "Gas probleem herstel", "Lekkage alarm", "Lekkage herstel", "X-10 Probleem", "X-10 Probleem herstel",
-           # 81
-           "Deelschakeling", "Ingeschakeld", "Snel deelschakeling", "Snel ingeschakeld", "Uitgezet",
-           "Inschakelfout (auto)", "Test gestart", "Test gestopt", "Force aan", "Geheel in (auto)",
-           "Onmiddelijk", "Overbruggen", "Inschakelfout", "Door Open", "Communication Established By Control Panel",
-           "Systeem reset", "Installateur programmeert", "Foutieve code", "Not Sys Event", "Not Sys Event",
-           # 101
-           "Extreme Hot Alert", "Extreme Hot Alert Restore", "Freeze Alert", "Freeze Alert Restore", "Human Cold Alert",
-           "Human Cold Alert Restore", "Human Hot Alert", "Human Hot Alert Restore", "Temperature Sensor Trouble", "Temperature Sensor Trouble Restore",
-
-           # New values for PowerMaster and models with partitions
-           "PIR Mask", "PIR Mask Restore", "Repeater low battery", "Repeater low battery restore", "Repeater inactive",
-           "Repeater inactive restore", "Repeater tamper", "Repeater tamper restore", "Siren test end", "Devices test end",
-           # 121
-           "One way comm. trouble", "One way comm. trouble restore", "Sensor outdoor alarm", "Sensor outdoor restore", "Guard sensor alarmed",
-           "Guard sensor alarmed restore", "Date time change", "System shutdown", "System power up", "Missed Reminder",
-           "Pendant test fail", "Basic KP inactive", "Basic KP inactive restore", "Basic KP tamper", "Basic KP tamper Restore",
-           "Heat", "Heat restore", "LE Heat Trouble", "CO alarm", "CO alarm restore",
-           # 141
-           "CO trouble", "CO trouble restore", "Exit Installer", "Enter Installer", "Self test trouble",
-           "Self test restore", "Confirm panic event", "n/a", "Soak test fail", "Fire Soak test fail",
-           "Gas Soak test fail", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a"),
-   "FR" : (
-           "Aucun",
-           # 1
-           "Alarme Intérieure", "Alarme Périphérie", "Alarme Différée", "Alarme Silencieuse 24H", "Alarme Audible 24H",
-           "Autoprotection", "Alarme Autoprotection Centrale", "Alarme Autoprotection", "Alarme Autoprotection", "Défaut de communication",
-           "Alarme Panique Depuis Memclé", "Alarme Panique depuis Centrale", "Contrainte", "Confirmer l'alarme", "Perte de Communication",
-           "Rétablissement Défaut Supervision", "Rétablissement Alarme Intérieure", "Rétablissement Alarme Périphérie", "Rétablissement Alarme Différée", "Rétablissement Alarme Silencieuse 24H",
-           "Rétablissement Alarme Audible 24H", "Rétablissement Autoprotection", "Rétablissement Alarme Autoprotection Centrale", "Rétablissement Alarme Autoprotection", "Rétablissement Alarme Autoprotection",
-           "Rétablissement des Communications", "Annuler Alarme", "Rétablissement Général", "Rétablissement Défaut", "Pas utilisé",
-           "Evenement Fermeture Récente", "Alarme Incendie", "Rétablissement Alarme Incendie", "Non Actif", "Urgence",
-           "Pas utilisé", "Désarmement Latchkey", "Rétablissement Alarme Panique", "Défaut Supervision (Inactive)", "Rétablissement Supervision (Active)",
-           "Batterie Faible", "Rétablissement Batterie Faible", "Coupure Secteur", "Rétablissement Secteur", "Batterie Centrale Faible",
-           "Rétablissement Batterie Centrale Faible", "Détection Brouillage Radio", "Rétablissement Détection Brouillage Radio", "Défaut Communication", "Rétablissement Communications",
-           # 51
-           "Défaut Ligne Téléphonique", "Rétablissement Ligne Téléphonique", "Auto Test", "Coupure Secteur/Fusible", "Rétablissement Secteur/Fusible",
-           "Memclé Batterie Faible", "Rétablissement Memclé Batterie Faible", "Réinitialisation Technicien", "Batterie Déconnectée ", "Clavier/Télécommande Batterie Faible",
-           "Rétablissement Clavier/Télécommande Batterie Faible", "Clavier/Télécommande Inactif", "Rétablissement Clavier/Télécommande Actif", "Batterie Faible", "Nettoyage Détecteur Incendie",
-           "Alarme incendie", "Batterie Faible", "Rétablissement Batterie", "Coupure Secteur", "Rétablissement Secteur",
-           "Défaut Supervision (Inactive)", "Rétablissement Supervision (Active)", "Alarme Gaz", "Rétablissement Alarme Gaz", "Défaut Gaz",
-           "Rétablissement Défaut Gaz", "Alarme Inondation", "Rétablissement Alarme Inondation", "Défaut X-10", "Rétablissement Défaut X-10",
-           # 81
-           "Armement Partiel", "Armement Total", "Armement Partiel Instantané", "Armement Total Instantané", "Désarmement",
-           "Echec d'armement", "Entrer dans Mode Test", "Sortir du Mode Test", "Fermeture Forcée", "Armement Automatique",
-           "Armement Instantané", "Bypass", "Echec d'Armement", "Porte Ouverte", "Communication établie par le panneau de control",
-           "Réinitialisation du Système", "Installer Programming", "Mauvais code PIN", "Not Sys Event", "Not Sys Event",
-           # 101
-           "Alerte Chaleure Extrême", "Rétablissement Alerte Chaleure Extrême", "Alerte Gel", "Rétablissement Alerte Gel", "Alerte Froid",
-           "Rétablissement Alerte Froid", "Alerte Chaud", "Rétablissement Alerte Chaud", "Défaut Capteur de Température", "Rétablissement Défaut Capteur de Température",
-
-           # New values for PowerMaster and models with partitions
-           "PIR Masqué", "Rétablissement PIR Masqué", "Repeater low battery", "Repeater low battery restore", "Repeater inactive",
-           "Repeater inactive restore", "Repeater tamper", "Repeater tamper restore", "Siren test end", "Devices test end",
-           # 121
-           "One way comm. trouble", "One way comm. trouble restore", "Sensor outdoor alarm", "Sensor outdoor restore", "Guard sensor alarmed",
-           "Guard sensor alarmed restore", "Date time change", "System shutdown", "System power up", "Missed Reminder",
-           "Pendant test fail", "Basic KP inactive", "Basic KP inactive restore", "Basic KP tamper", "Basic KP tamper Restore",
-           "Heat", "Heat restore", "LE Heat Trouble", "CO alarm", "CO alarm restore",
-           # 141
-           "CO trouble", "CO trouble restore", "Sortir Mode Installeur", "Entrer Mode Installeur", "Self test trouble",
-           "Self test restore", "Confirm panic event", "n/a", "Soak test fail", "Fire Soak test fail",
-           "Gas Soak test fail", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a", "n/a", "n/a", "n/a", "n/a",
-           "n/a"),
-   "Panel" : pmZoneName_t_EN
-}
-
-# TODO:  Populate the 2 "stop" columns by using pmPanelConfig_t
-# TODO:  Auto populate from EPROM
-# Default "Panel" to English
-pmLogPowerColl = collections.namedtuple("pmLogPowerColl", 'lang pmax_include pmax_autonumber pmax_start pmax_stop pmas_include pmas_autonumber pmas_start pmas_stop' )
-pmLogPower = [                                                                                                                # powermax   powermaster  
-   pmLogPowerColl( { "EN" :  "System", "NL" :   "Systeem", "FR" : "Système", "Panel" :  "System" },  True, False, 0,  0 ,  True,  False, 0,  0 ), #     0           0  System   
-   pmLogPowerColl( { "EN" :    "Zone", "NL" :      "Zone", "FR" :    "Zone", "Panel" :    "Zone" },  True,  True, 1, 30 ,  True,   True, 1, 64 ), #     1           1  Zone     
-   pmLogPowerColl( { "EN" :     "Fob", "NL" :       "Fob", "FR" :  "Memclé", "Panel" :     "Fob" },  True,  True, 1,  8 ,  True,   True, 1, 32 ), #    31          65  Fob      
-   pmLogPowerColl( { "EN" :    "User", "NL" : "Gebruiker", "FR" :    "User", "Panel" :    "User" },  True,  True, 1,  8 ,  True,   True, 1, 48 ), #    39          97  User     
-   pmLogPowerColl( { "EN" :     "Pad", "NL" :       "Pad", "FR" :     "Pad", "Panel" :     "Pad" },  True,  True, 1,  8 ,  True,   True, 1, 32 ), #    47         145  Pad      
-   pmLogPowerColl( { "EN" :     "Sir", "NL" :       "Sir", "FR" :     "Sir", "Panel" :     "Sir" },  True,  True, 1,  2 ,  True,   True, 1,  8 ), #    55         177  Sir      
-   pmLogPowerColl( { "EN" :    "2Pad", "NL" :      "2Pad", "FR" :    "2Pad", "Panel" :    "2Pad" },  True,  True, 1,  4 ,  True,   True, 1,  4 ), #    57         185  2PAD     
-   pmLogPowerColl( { "EN" :     "X10", "NL" :       "X10", "FR" :     "X10", "Panel" :     "X10" },  True,  True, 1, 15 ,  True,   True, 1, 15 ), #    61         189  X10      
-   pmLogPowerColl( { "EN" :     "PGM", "NL" :       "PGM", "FR" :     "PGM", "Panel" :     "PGM" },  True, False, 0,  0 ,  True,  False, 0,  0 ), #    76         204  PGM      
-   pmLogPowerColl( { "EN" :     "GSM", "NL" :       "GSM", "FR" :     "GSM", "Panel" :     "GSM" },  True, False, 0,  0 , False,  False, 0,  0 ), #    77            - GSM
-   pmLogPowerColl( { "EN" :  "P-LINK", "NL" :    "P-LINK", "FR" :  "P-LINK", "Panel" :  "P-LINK" },  True, False, 0,  0 ,  True,  False, 0,  0 ), #    78         205  P-LINK   
-   pmLogPowerColl( { "EN" :    "PTag", "NL" :      "PTag", "FR" :    "PTag", "Panel" :    "PTag" },  True,  True, 1,  8 ,  True,   True, 1, 32 ), #    79         206  PTag     
-   pmLogPowerColl( { "EN" :    "Rptr", "NL" :      "Rptr", "FR" :    "Rptr", "Panel" :    "Rptr" }, False, False, 0,  0 ,  True,   True, 1,  8 ), #     -         238  Rptr     
-   pmLogPowerColl( { "EN" : "Unknown", "NL" :   "Unknown", "FR" : "Unknown", "Panel" : "Unknown" },  True, False, 1, 41 ,  True,  False, 1, 10 )  #    87         246  Unknown  
-]
-
-pmLogPowerMaxUser_t = {}
-pmLogPowerMasterUser_t = {}
-for language in ["EN", "NL", "FR", "Panel"]:
-    pmLogPowerMaxUser_t[language] = []
-    pmLogPowerMasterUser_t[language] = []
-    for v in pmLogPower:
-        # create list
-        if v.pmax_include:
-            w = v.lang[language]
-            pmLogPowerMaxUser_t[language].extend([f"{w} {i:>02}" if v.pmax_autonumber else w for i in range(v.pmax_start, v.pmax_stop+1)])
-        if v.pmas_include:
-            w = v.lang[language]
-            pmLogPowerMasterUser_t[language].extend([f"{w} {i:>02}" if v.pmas_autonumber else w for i in range(v.pmas_start, v.pmas_stop+1)])
-
-#pmSysStatusFlags_t = {
-#   "EN" : ( "Ready", "Alert in memory"  , "Trouble"     , "Bypass on"      , "Last 10 seconds"      , "Zone event"    , "Status changed"  , "Alarm event"     ),
-#   "NL" : ( "Klaar", "Alarm in geheugen", "Probleem"    , "Overbruggen aan", "Laatste 10 seconden"  , "Zone verstoord", "Status gewijzigd", "Alarm actief"    ),
-#   "FR" : (  "Prêt", "Alerte en mémoire", "Défaut/Panne", "Isolation sur"  , "10 dernières secondes", "Evenement Zone", "Etat modifié"    , "Evenment Alarme" )
-#}
 
 ##############################################################################################################################################################################################################################################
 ##########################  A7 Message Alarm / Trouble Status ################################################################################################################################################################################
@@ -705,12 +460,37 @@ EVENT_TYPE_PERIMETER_RESTORE = 0x12
 EVENT_TYPE_DELAY_RESTORE = 0x13
 EVENT_TYPE_CONFIRM_ALARM = 0x0E
 
+pmPanelTamperSet = ( EVENT_TYPE_SENSOR_TAMPER, EVENT_TYPE_PANEL_TAMPER, EVENT_TYPE_TAMPER_ALARM_A, EVENT_TYPE_TAMPER_ALARM_B)
+# The reasons to cancel the siren
+pmPanelCancelSet = ( EVENT_TYPE_DISARM, EVENT_TYPE_ALARM_CANCEL, EVENT_TYPE_FIRE_RESTORE, EVENT_TYPE_FLOOD_ALERT_RESTORE, EVENT_TYPE_GAS_TROUBLE_RESTORE)
+# The reasons to ignore (not cancel) the siren
+pmPanelIgnoreSet = ( EVENT_TYPE_DELAY_RESTORE, EVENT_TYPE_CONFIRM_ALARM, EVENT_TYPE_INTERIOR_RESTORE, EVENT_TYPE_PERIMETER_RESTORE)
+
+# These 2 dictionaries are subsets of pmLogEvent_t
+pmPanelAlarmType_t = {
+   0x00 : AlAlarmType.NONE,     0x01 : AlAlarmType.INTRUDER,  0x02 : AlAlarmType.INTRUDER, 0x03 : AlAlarmType.INTRUDER,
+   0x04 : AlAlarmType.INTRUDER, 0x05 : AlAlarmType.INTRUDER,  0x06 : AlAlarmType.TAMPER,   0x07 : AlAlarmType.TAMPER,
+   0x08 : AlAlarmType.TAMPER,   0x09 : AlAlarmType.TAMPER,    0x0B : AlAlarmType.PANIC,    0x0C : AlAlarmType.PANIC,
+   0x20 : AlAlarmType.FIRE,     0x23 : AlAlarmType.EMERGENCY, 0x49 : AlAlarmType.GAS,      0x4D : AlAlarmType.FLOOD,
+#   0x75 : AlAlarmType.TAMPER
+}
+
+pmPanelTroubleType_t = {
+#   0x00 : AlTroubleType.NONE,          0x01 : AlTroubleType.GENERAL,   0x0A : AlTroubleType.COMMUNICATION, 0x0F : AlTroubleType.GENERAL,   0x01 is already in AlarmType, it is not a General Trouble indication
+   0x00 : AlTroubleType.NONE,          0x0A : AlTroubleType.COMMUNICATION, 0x0F : AlTroubleType.GENERAL,
+   0x29 : AlTroubleType.BATTERY,       0x2B : AlTroubleType.POWER,         0x2D : AlTroubleType.BATTERY,       0x2F : AlTroubleType.JAMMING,
+   0x31 : AlTroubleType.COMMUNICATION, 0x33 : AlTroubleType.TELEPHONE,     0x36 : AlTroubleType.POWER,         0x38 : AlTroubleType.BATTERY,
+   0x3B : AlTroubleType.BATTERY,       0x3C : AlTroubleType.BATTERY,       0x40 : AlTroubleType.BATTERY,       0x43 : AlTroubleType.BATTERY,
+#   0x45 : AlTroubleType.POWER,         0x71 : AlTroubleType.BATTERY,       0x79 : AlTroubleType.COMMUNICATION
+}
+
 # Zone names are taken from the panel, so no langauage support needed, these are updated when EEPROM is downloaded or the B0 message is received
+#    TODO : Ensure that the EPROM and downloaded strings match the lower case with underscores to match the language files where possible
 pmZoneName_t = [
-   "Attic", "Back door", "Basement", "Bathroom", "Bedroom", "Child room", "Conservatory", "Play room", "Dining room", "Downstairs",
-   "Emergency", "Fire", "Front door", "Garage", "Garage door", "Guest room", "Hall", "Kitchen", "Laundry room", "Living room",
-   "Master bathroom", "Master bedroom", "Office", "Upstairs", "Utility room", "Yard", "Custom 1", "Custom 2", "Custom 3",
-   "Custom 4", "Custom 5", "Not Installed"
+   "attic", "back_door", "basement", "bathroom", "bedroom", "child_room", "conservatory", "play_room", "dining_room", "downstairs",
+   "emergency", "fire", "front_door", "garage", "garage_door", "guest_room", "hall", "kitchen", "laundry_room", "living_room",
+   "master_bathroom", "master_bedroom", "office", "upstairs", "utility_room", "yard", "custom_1", "custom_2", "custom_3",
+   "custom_4", "custom_5", "not_installed"
 ]
 
 ##############################################################################################################################################################################################################################################
@@ -849,7 +629,7 @@ DecodePanelSettings = {
     "x10ZoneNames"   : SettingsCommand(  Dumpy, 16, "BYTE",   2864,   8,   1,    -1,  "X10 Location Name references",       {} ),   # 
     #"MaybeScreenSaver":SettingsCommand(  Dumpy, 75, "BYTE",   5888,   8,   1,    -1,  "Maybe the screen saver",             {} ),   # Structure not known 
 
-    "ZoneStringNames": SettingsCommand(  Dumpy, 32,"STRING",  6400, 128,  16,    -1,  "Zone String Names",                  {} ),   # Zone String Names e.g "Attic", "Back door", "Basement", "Bathroom" etc 32 strings of 16 characters each, replace pmZoneName_t
+#    "ZoneStringNames": SettingsCommand(  Dumpy, 32,"STRING",  6400, 128,  16,    -1,  "Zone String Names",                  {} ),   # Zone String Names e.g "Attic", "Back door", "Basement", "Bathroom" etc 32 strings of 16 characters each, replace pmZoneName_t
 
 
 #PowerMax Only
@@ -864,11 +644,11 @@ DecodePanelSettings = {
     "ZoneNamePMax"   : SettingsCommand( XDumpy, 30, "BYTE",   2880,   8,   1,    -1,  "Zone Names, PowerMax",               {} ),
 
     #"ZoneStrType1X"  : SettingsCommand( XDumpy, 16,"STRING", 22568, 120,  16,    -1,  "PowerMax Zone Type String",          {} ),   # Zone String Types e.g 
-    "ZoneStrType1X"  : SettingsCommand( XDumpy, 16,"STRING", 22571,  96,  16,    -1,  "PowerMax Zone Type String",          {} ),   # Zone String Types e.g This starts 3 bytes later as it misses the "1. " and the strings are only 12 characters
-    "ZoneStrType2X"  : SettingsCommand( XDumpy, 16,  "BYTE", 22583,   8,  16,    -1,  "PowerMax Zone Type Reference",       {} ),   # Zone String Types e.g 
+#    "ZoneStrType1X"  : SettingsCommand( XDumpy, 16,"STRING", 22571,  96,  16,    -1,  "PowerMax Zone Type String",          {} ),   # Zone String Types e.g This starts 3 bytes later as it misses the "1. " and the strings are only 12 characters
+#    "ZoneStrType2X"  : SettingsCommand( XDumpy, 16,  "BYTE", 22583,   8,  16,    -1,  "PowerMax Zone Type Reference",       {} ),   # Zone String Types e.g 
 
-    "ZoneChimeType1X": SettingsCommand( XDumpy,  3,"STRING",0x64D8, 120,  16,    -1,  "PowerMax Zone Chime Type String",    {} ),   # Zone String Types e.g 
-    "ZoneChimeType2X": SettingsCommand( XDumpy,  3,  "BYTE",0x64E7,   8,  16,    -1,  "PowerMax Zone Chime Type Ref",       {} ),   # Zone String Types e.g 
+#    "ZoneChimeType1X": SettingsCommand( XDumpy,  3,"STRING",0x64D8, 120,  16,    -1,  "PowerMax Zone Chime Type String",    {} ),   # Zone String Types e.g 
+#    "ZoneChimeType2X": SettingsCommand( XDumpy,  3,  "BYTE",0x64E7,   8,  16,    -1,  "PowerMax Zone Chime Type Ref",       {} ),   # Zone String Types e.g 
 
     #"Test2"          : SettingsCommand(  Dumpy,128, "BYTE",   2816,   8,   1,    -1,  "Test 2 String, PowerMax",            {} ),   # 0xB00
     #"Test1"          : SettingsCommand(  Dumpy,128, "BYTE",   2944,   8,   1,    -1,  "Test 1 String, PowerMax",            {} ),   # 0xB80
@@ -882,11 +662,11 @@ DecodePanelSettings = {
     "ZoneExtPMaster" : SettingsCommand( SDumpy, 64, "BYTE",  47218,  80,  10,    -1,  "Zone Extended Data, PowerMaster",    {} ),   # 10 bytes each, 64 zones 
 
     #"ZoneStrType1S"  : SettingsCommand( SDumpy, 16,"STRING", 33024, 120,  16,    -1,  "PowerMaster Zone Type String",       {} ),   # Zone String Types e.g 
-    "ZoneStrType1S"  : SettingsCommand( SDumpy, 16,"STRING", 33027,  96,  16,    -1,  "PowerMaster Zone Type String",       {} ),   # Zone String Types e.g  This starts 3 bytes later as it misses the "1. " and the strings are only 12 characters
-    "ZoneStrType2S"  : SettingsCommand( SDumpy, 16,  "BYTE", 33039,   8,  16,    -1,  "PowerMaster Zone Type Reference",    {} ),   # Zone String Types e.g 
+#    "ZoneStrType1S"  : SettingsCommand( SDumpy, 16,"STRING", 33027,  96,  16,    -1,  "PowerMaster Zone Type String",       {} ),   # Zone String Types e.g  This starts 3 bytes later as it misses the "1. " and the strings are only 12 characters
+#    "ZoneStrType2S"  : SettingsCommand( SDumpy, 16,  "BYTE", 33039,   8,  16,    -1,  "PowerMaster Zone Type Reference",    {} ),   # Zone String Types e.g 
 
-    "ZoneChimeType1S": SettingsCommand( SDumpy,  3,"STRING",0x8EB0, 120,  16,    -1,  "PowerMaster Zone Chime Type String", {} ),   # Zone String Types e.g 
-    "ZoneChimeType2S": SettingsCommand( SDumpy,  3,  "BYTE",0x8EBF,   8,  16,    -1,  "PowerMaster Zone Chime Type Ref",    {} ),   # Zone String Types e.g 
+#    "ZoneChimeType1S": SettingsCommand( SDumpy,  3,"STRING",0x8EB0, 120,  16,    -1,  "PowerMaster Zone Chime Type String", {} ),   # Zone String Types e.g 
+#    "ZoneChimeType2S": SettingsCommand( SDumpy,  3,  "BYTE",0x8EBF,   8,  16,    -1,  "PowerMaster Zone Chime Type Ref",    {} ),   # Zone String Types e.g 
 
 #    "LogEventStr"    : SettingsCommand( SDumpy,160,"STRING",0xED00, 128,  16,    -1,  "Log Event Strings",                  {} ),   # Zone String Types e.g 
 
@@ -905,7 +685,7 @@ class PanelSetting(IntEnum):
     Sirens          = 6
     AlarmLED        = 7
     PartitionData   = 8
-    ZoneStringNames = 9
+    ZoneChime       = 9
     ZoneNames       = 10
     ZoneTypes       = 11
     ZoneExt         = 12
@@ -916,7 +696,6 @@ class PanelSetting(IntEnum):
     PanicAlarm      = 17
     PanelBypass     = 18
     PanelModel      = 19
-    ZoneChime       = 20
 
 B0All = False
 PanelSettingsCollection = collections.namedtuple('PanelSettingsCollection', 'length display datatype datacount msg') # overall length in bytes, datatype in bits
@@ -961,7 +740,6 @@ PanelSettingCodes = { # These are used to create the self.PanelSettings dictiona
     PanelSetting.Sirens           : PanelSettingCodesType( None, "SirensPMax",       "SirensPMaster",   ""    , None, None,                     bytearray()),
     PanelSetting.AlarmLED         : PanelSettingCodesType( None, None,               "AlarmLED",        ""    , None, None,                     bytearray()),
     PanelSetting.PartitionData    : PanelSettingCodesType( None, "PartitionData",    "PartitionData",   ""    , None, None,                     bytearray()),
-    PanelSetting.ZoneStringNames  : PanelSettingCodesType( None, "ZoneStringNames",  "ZoneStringNames", ""    , None, None,                     pmZoneName_t.copy()),
     PanelSetting.ZoneNames        : PanelSettingCodesType( None, "ZoneNamePMax",     "ZoneNamePMaster", ""    , pmSendMsgB0_t["ZONE_NAMES"], 3, bytearray()),
     PanelSetting.ZoneTypes        : PanelSettingCodesType( None, None,               None,              ""    , pmSendMsgB0_t["ZONE_TYPES"], 3, bytearray()),          # Indirectly from EPROM but needs to be calculated/extracted
     PanelSetting.ZoneExt          : PanelSettingCodesType( None, None,               "ZoneExtPMaster",  ""    , None, None,                     bytearray()),
@@ -975,7 +753,6 @@ PanelSettingCodes = { # These are used to create the self.PanelSettings dictiona
     PanelSetting.ZoneChime        : PanelSettingCodesType( None, None,               None,              ""    , None, None,                     {} )
 }
 
-
 # These blocks are not value specific, they are used to download blocks of EEPROM data that we need without reference to what the data means
 #    They are used when EEPROM_DOWNLOAD_ALL is False
 #    We have to do it like this as the max message size is 176 (0xB0) bytes.
@@ -983,17 +760,17 @@ PanelSettingCodes = { # These are used to create the self.PanelSettings dictiona
 pmBlockDownload_Short = {
     "PowerMax" : ( 
               ( 0x0100, 0x0500 ),
-              ( 0x0900, 0x0C00 ),
-              ( 0x1900, 0x1B00 ),      # ZoneStringNames 0x1900 = 6400 Decimal
-              ( 0x5800, 0x5A00 ),      # pmZoneType_t starts at 0x5828
-              ( 0x64D8, 0x6510 )       # pmZoneChime starts at 0x64D8
+              ( 0x0900, 0x0C00 )
+#              ( 0x1900, 0x1B00 ),      # ZoneStringNames 0x1900 = 6400 Decimal
+#              ( 0x5800, 0x5A00 ),      # pmZoneType_t starts at 0x5828
+#              ( 0x64D8, 0x6510 )       # pmZoneChime starts at 0x64D8
     ),
     "PowerMaster" : (
               ( 0x0100, 0x0500 ),
               ( 0x0900, 0x0C00 ),
-              ( 0x1900, 0x1B00 ),      # ZoneStringNames 0x1900 = 6400 Decimal
-              ( 0x8100, 0x8200 ),
-              ( 0x8EB0, 0x8EE8 ),
+#              ( 0x1900, 0x1B00 ),      # ZoneStringNames 0x1900 = 6400 Decimal
+#              ( 0x8100, 0x8200 ),
+#              ( 0x8EB0, 0x8EE8 ),      # Chime
               ( 0xB600, 0xBB00 ),
               ( 0xC000, 0xC280 )
 #              ( 0xED00, 0xF700 )       # The pmLogEvent_t
@@ -1016,70 +793,11 @@ for blk in pmBlockDownload_Short:
 #    for d in pmBlockDownload[t]:
 #        print(toString(d))
 
-##############################################################################################################################################################################################################################################
-##########################  Detailed Panel Type Decode  ######################################################################################################################################################################################
-##############################################################################################################################################################################################################################################
 
-# pmPanelName_t = {
-   # "0000" : "PowerMax", "0001" : "PowerMax LT", "0004" : "PowerMax A", "0005" : "PowerMax", "0006" : "PowerMax LT",
-   # "0009" : "PowerMax B", "000a" : "PowerMax A", "000b" : "PowerMax", "000c" : "PowerMax LT", "000f" : "PowerMax B",
-   # "0014" : "PowerMax A", "0015" : "PowerMax", "0016" : "PowerMax", "0017" : "PowerArt", "0018" : "PowerMax SC",
-   # "0019" : "PowerMax SK", "001a" : "PowerMax SV", "001b" : "PowerMax T", "001e" : "PowerMax WSS", "001f" : "PowerMax Smith",
-   # "0100" : "PowerMax+", "0103" : "PowerMax+ UK (3)", "0104" : "PowerMax+ JP", "0106" : "PowerMax+ CTA", "0108" : "PowerMax+",
-   # "010a" : "PowerMax+ SH", "010b" : "PowerMax+ CF", "0112" : "PowerMax+ WSS", "0113" : "PowerMax+ 2INST",
-   # "0114" : "PowerMax+ HL", "0115" : "PowerMax+ UK", "0116" : "PowerMax+ 2INST3", "0118" : "PowerMax+ CF",
-   # "0119" : "PowerMax+ 2INST", "011a" : "PowerMax+", "011c" : "PowerMax+ WSS", "011d" : "PowerMax+ UK",
-   # "0120" : "PowerMax+ 2INST33", "0121" : "PowerMax+", "0122" : "PowerMax+ CF", "0124" : "PowerMax+ UK",
-   # "0127" : "PowerMax+ 2INST_MONITOR", "0128" : "PowerMax+ KeyOnOff", "0129" : "PowerMax+ 2INST_MONITOR",
-   # "012a" : "PowerMax+ 2INST_MONITOR42", "012b" : "PowerMax+ 2INST33", "012c" : "PowerMax+ One Inst_1_44_0",
-   # "012d" : "PowerMax+ CF_1_45_0", "012e" : "PowerMax+ SA_1_46", "012f" : "PowerMax+ UK_1_47", "0130" : "PowerMax+ SA UK_1_48",
-   # "0132" : "PowerMax+ KeyOnOff 1_50", "0201" : "PowerMax Pro", "0202" : "PowerMax Pro-Nuon ",
-   # "0204" : "PowerMax Pro-PortugalTelecom", "020a" : "PowerMax Pro-PortugalTelecom2", "020c" : "PowerMax HW-V9 Pro",
-   # "020d" : "PowerMax ProSms", "0214" : "PowerMax Pro-PortugalTelecom_4_5_02", "0216" : "PowerMax HW-V9_4_5_02 Pro",
-   # "0217" : "PowerMax ProSms_4_5_02", "0218" : "PowerMax UK_DD243_4_5_02 Pro M", "021b" : "PowerMax Pro-Part2__2_27",
-   # "0223" : "PowerMax Pro Bell-Canada", "0301" : "PowerMax Complete", "0302" : "PowerMax Complete_NV",
-   # "0303" : "PowerMax Complete-PortugalTelecom", "0307" : "PowerMax Complete_1_0_07", "0308" : "PowerMax Complete_NV_1_0_07",
-   # "030a" : "PowerMax Complete_UK_DD243_1_1_03", "030b" : "PowerMax Complete_COUNTERFORCE_1_0_06", "0401" : "PowerMax Pro-Part",
-   # "0402" : "PowerMax Pro-Part CellAdaptor", "0405" : "PowerMax Pro-Part_5_0_08", "0406" : "PowerMax Pro-Part CellAdaptor_5_2_04",
-   # "0407" : "PowerMax Pro-Part KeyOnOff_5_0_08", "0408" : "PowerMax UK Pro-Part_5_0_08",
-   # "0409" : "PowerMax SectorUK Pro-Part_5_0_08", "040a" : "PowerMax Pro-Part CP1 4_10", "040c" : "PowerMax Pro-Part_Cell_key_4_12",
-   # "040d" : "PowerMax Pro-Part UK 4_13", "040e" : "PowerMax SectorUK Pro-Part_4_14", "040f" : "PowerMax Pro-Part UK 4_15",
-   # "0410" : "PowerMax Pro-Part CP1 4_16", "0411" : "PowerMax NUON key 4_17", "0433" : "PowerMax Pro-Part2__4_51",
-   # "0434" : "PowerMax UK Pro-Part2__4_52", "0436" : "PowerMax Pro-Part2__4_54", "0437" : "PowerMax Pro-Part2__4_55 (CP_01)",
-   # "0438" : "PowerMax Pro-Part2__4_56", "0439" : "PowerMax Pro-Part2__4_57 (NUON)", "043a" : "PowerMax Pro 4_58",
-   # "043c" : "PowerMax Pro 4_60", "043e" : "PowerMax Pro-Part2__4_62", "0440" : "PowerMax Pro-Part2__4_64",
-   # "0442" : "PowerMax 4_66", "0443" : "PowerMax Pro 4_67", "0444" : "PowerMax Pro 4_68", "0445" : "PowerMax Pro 4_69",
-   # "0446" : "PowerMax Pro-Part2__4_70", "0447" : "PowerMax 4_71", "0449" : "PowerMax 4_73", "044b" : "PowerMax Pro-Part2__4_75",
-   # "0451" : "PowerMax Pro 4_81", "0452" : "PowerMax Pro 4_82", "0454" : "PowerMax 4_84", "0455" : "PowerMax 4_85",
-   # "0456" : "PowerMax 4_86", "0503" : "PowerMax UK Complete partition 1_5_00", "050a" : "PowerMax Complete partition GPRS",
-   # "050b" : "PowerMax Complete partition NV GPRS", "050c" : "PowerMax Complete partition GPRS NO-BBA",
-   # "050d" : "PowerMax Complete partition NV GPRS NO-BBA", "050e" : "PowerMax Complete part. GPRS NO-BBA UK_5_14",
-   # "0511" : "PowerMax Pro-Part CP1 GPRS 5_17", "0512" : "PowerMax Complete part. BBA UK_5_18",
-   # "0533" : "PowerMax Complete part2  5_51", "0534" : "PowerMax Complete part2 5_52 (UK)",
-   # "0536" : "PowerMax Complete 5_54 (GR)", "0537" : "PowerMax Complete  5_55", "053a" : "PowerMax Complete 5_58 (PT)",
-   # "053b" : "PowerMax Complete part2 5_59 (NV)", "053c" : "PowerMax Complete  5_60", "053e" : "PowerMax Complete 5_62",
-   # "053f" : "PowerMax Complete part2  5_63", "0540" : "PowerMax Complete  5_64", "0541" : "PowerMax Complete  5_65",
-   # "0543" : "PowerMax Complete  5_67", "0544" : "PowerMax Complete  5_68", "0545" : "PowerMax Complete  5_69",
-   # "0546" : "PowerMax Complete  5_70", "0547" : "PowerMax Complete  5_71", "0549" : "PowerMax Complete  5_73",
-   # "054b" : "PowerMax Complete  5_75", "054f" : "PowerMax Complete  5_79", "0601" : "PowerMax Express",
-   # "0603" : "PowerMax Express CP 01", "0605" : "PowerMax Express OEM 6_5", "0607" : "PowerMax Express BBA 6_7",
-   # "0608" : "PowerMax Express CP 01 BBA 6_8", "0609" : "PowerMax Express OEM1 BBA 6_9", "060b" : "PowerMax Express BBA 6_11",
-   # "0633" : "PowerMax Express 6_51", "063b" : "PowerMax Express 6_59", "063d" : "PowerMax Express 6_61",
-   # "063e" : "PowerMax Express 6_62 (UK)", "0645" : "PowerMax Express 6_69", "0647" : "PowerMax Express 6_71",
-   # "0648" : "PowerMax Express 6_72", "0649" : "PowerMax Express 6_73", "064a" : "PowerMax Activa 6_74",
-   # "064c" : "PowerMax Express 6_76", "064d" : "PowerMax Express 6_77", "064e" : "PowerMax Express 6_78",
-   # "064f" : "PowerMax Secure 6_79", "0650" : "PowerMax Express 6_80", # "0650" : "PowerMax Express part2 M 6_80",
-   # "0651" : "PowerMax Express 6_81", "0652" : "PowerMax Express 6_82", "0653" : "PowerMax Express 6_83",
-   # "0654" : "PowerMax 6_84", "0655" : "PowerMax 6_85", "0658" : "PowerMax 6_88", "0659" : "PowerMax 6_89",
-   # "065a" : "PowerMax 6_90", "065b" : "PowerMax 6_91", "0701" : "PowerMax PowerCode-G 7_1", "0702" : "PowerMax PowerCode-G 7_2",
-   # "0704" : "PowerMaster10 7_4", "0705" : "PowerMaster10 7_05", "0707" : "PowerMaster10 7_07", "070c" : "PowerMaster10 7_12",
-   # "070f" : "PowerMaster10 7_15", "0710" : "PowerMaster10 7_16", "0711" : "PowerMaster10 7_17", "0712" : "PowerMaster10 7_18",
-   # "0713" : "PowerMaster10 7_19", "0802" : "PowerMax Complete PowerCode-G 8_2", "0803" : "PowerMaster30 8_3",
-   # "080f" : "PowerMaster30 8_15", "0810" : "PowerMaster30 8_16", "0812" : "PowerMaster30 8_18", "0813" : "PowerMaster30 8_19",
-   # "0815" : "PowerMaster30 8_21",
-   # "0A47" : "PowerMaster33 10_71",
-   # "0F92" : "PowerMaster33 15_146"
-# }
+pmZoneTypeKey = ( "non-alarm", "emergency", "flood", "gas", "delay_1", "delay_2", "interior_follow", "perimeter", "perimeter_follow",
+                "24_hours_silent", "24_hours_audible", "fire", "interior", "home_delay", "temperature", "outdoor", "undefined" )
+
+pmZoneChimeKey = ("chime_off", "melody_chime", "zone_name_chime")
 
 # Note: names need to match to VAR_xxx
 pmZoneSensorMaxGeneric_t = {
@@ -1087,7 +805,6 @@ pmZoneSensorMaxGeneric_t = {
    0x6 : AlSensorType.MAGNET, 0x7 : AlSensorType.MAGNET, 0x8 : AlSensorType.MAGNET, 0x9 : AlSensorType.MAGNET, 
    0xA : AlSensorType.SMOKE, 0xB : AlSensorType.GAS, 0xC : AlSensorType.MOTION, 0xF : AlSensorType.WIRED
 } # unknown to date: Push Button, Flood, Universal
-
 
 #0x75 : ZoneSensorType("Next+ K9-85 MCW", AlSensorType.MOTION ), # Jan
 #0x86 : ZoneSensorType("MCT-426", AlSensorType.SMOKE ), # Jan
@@ -1165,7 +882,7 @@ pmZoneSensorMaster_t = {
 #           "Disarmed", "Home Exit Delay", "Away Exit Delay", "Entry Delay", "Armed Home", "Armed Away", "User Test",
 #           "Downloading", "Programming", "Installer", "Home Bypass", "Away Bypass", "Ready", "Not Ready", "??", "??",
 #           "Disarmed Instant", "Home Instant Exit Delay", "Away Instant Exit Delay", "Entry Delay Instant", "Armed Home Instant",
-#           "Armed Away Instant" ),
+#            ),
 #   "NL" : (
 #           "Uitgeschakeld", "Deel uitloopvertraging", "Totaal uitloopvertraging", "Inloopvertraging", "Deel ingeschakeld",
 #           "Totaal ingeschakeld", "Gebruiker test", "Downloaden", "Programmeren", "Monteurmode", "Deel met overbrugging",
@@ -1180,29 +897,31 @@ pmZoneSensorMaster_t = {
 
 PanelArmedStatusCollection = collections.namedtuple('PanelArmedStatusCollection', 'disarmed armed state')
 PanelArmedStatus = {
-   0x00 : PanelArmedStatusCollection(  True, False, AlPanelStatus.DISARMED ),      # Disarmed
-   0x01 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_HOME ),   # Arming Home
-   0x02 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_AWAY ),   # Arming Away
-   0x03 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ENTRY_DELAY ),   # Entry Delay
-   0x04 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_HOME ),    # Armed Home
-   0x05 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_AWAY ),    # Armed Away
-   0x06 : PanelArmedStatusCollection(  True, False, AlPanelStatus.SPECIAL ),       # User Test  (assume can only be done when panel is disarmed)
-   0x07 : PanelArmedStatusCollection(  None,  None, AlPanelStatus.DOWNLOADING ),   # Downloading
-   0x08 : PanelArmedStatusCollection(  None,  None, AlPanelStatus.INSTALLER ),     # Programming
-   0x09 : PanelArmedStatusCollection(  None,  None, AlPanelStatus.INSTALLER ),     # Installer
-   0x0A : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_HOME ),    # Armed Home Bypass
-   0x0B : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_AWAY ),    # Armed Away Bypass
-   0x0C : PanelArmedStatusCollection(  None,  None, AlPanelStatus.DISARMED ),      # Ready
-   0x0D : PanelArmedStatusCollection(  None,  None, AlPanelStatus.DISARMED ),      # Not Ready  (assume can only be done when panel is disarmed)
-   0x0E : PanelArmedStatusCollection(  None,  None, AlPanelStatus.UNKNOWN ),       # 
-   0x0F : PanelArmedStatusCollection(  None,  None, AlPanelStatus.UNKNOWN ),       # 
-   0x10 : PanelArmedStatusCollection(  True, False, AlPanelStatus.DISARMED ),      # Disarmed Instant
-   0x11 : PanelArmedStatusCollection( False, False, AlPanelStatus.ARMING_HOME ),   # Arming Home Last 10 Seconds
-   0x12 : PanelArmedStatusCollection( False, False, AlPanelStatus.ARMING_AWAY ),   # Arming Away Last 10 Seconds
-   0x13 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ENTRY_DELAY ),   # Entry Delay Instant
-   0x14 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_HOME ),    # Armed Home Instant
-   0x15 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_AWAY )     # Armed Away Instant
-}                                                                       
+   0x00 : PanelArmedStatusCollection(  True, False, AlPanelStatus.DISARMED ),             # Disarmed
+   0x01 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_HOME ),          # Arming Home
+   0x02 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_AWAY ),          # Arming Away
+   0x03 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ENTRY_DELAY ),          # Entry Delay
+   0x04 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_HOME ),           # Armed Home
+   0x05 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_AWAY ),           # Armed Away
+   0x06 : PanelArmedStatusCollection(  True, False, AlPanelStatus.USER_TEST ),            # User Test  (assume can only be done when panel is disarmed)
+   
+   0x07 : PanelArmedStatusCollection(  None,  None, AlPanelStatus.DOWNLOADING ),          # Downloading
+   0x08 : PanelArmedStatusCollection(  None,  None, AlPanelStatus.INSTALLER ),            # Programming
+   0x09 : PanelArmedStatusCollection(  None,  None, AlPanelStatus.INSTALLER ),            # Installer
+   0x0A : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_HOME ),           # Armed Home Bypass
+   0x0B : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_AWAY ),           # Armed Away Bypass
+   0x0C : PanelArmedStatusCollection(  None,  None, AlPanelStatus.DISARMED ),             # Ready
+   0x0D : PanelArmedStatusCollection(  None,  None, AlPanelStatus.DISARMED ),             # Not Ready  (assume can only be done when panel is disarmed)
+   0x0E : PanelArmedStatusCollection(  None,  None, AlPanelStatus.UNKNOWN ),              # 
+   0x0F : PanelArmedStatusCollection(  None,  None, AlPanelStatus.UNKNOWN ),              # 
+   # I don't think that the B0 message can command higher than 15
+   0x10 : PanelArmedStatusCollection(  True, False, AlPanelStatus.DISARMED ),             # Disarmed Instant
+   0x11 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_HOME ),          # Arming Home Last 10 Seconds             ####### armed was False
+   0x12 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMING_AWAY ),          # Arming Away Last 10 Seconds             ####### armed was False
+   0x13 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ENTRY_DELAY ),          # Entry Delay Instant
+   0x14 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_HOME ),           # Armed Home Instant
+   0x15 : PanelArmedStatusCollection( False,  True, AlPanelStatus.ARMED_AWAY )            # Armed Away Instant
+}
 
 #pmEventType_t = {
 #   "EN" : (
@@ -1218,28 +937,29 @@ PanelArmedStatus = {
 #           "Ouverture Autoprotection", "Echec de Communication", "Echec Ligne Téléphonique", "Fusible", "Pas Active", "Batterie Faible", "Echec Alimentation Secteur",
 #           "Alarme Incendie", "Urgence", "Autoprotection Sirène", "Rétablissement Autoprotection Sirène", "Batterie Faible Sirène", "Coupure Secteur Sirène" )
 #}
-ZoneEventActionCollection = collections.namedtuple('ZoneEventActionCollection', 'func parameter')
+ZoneEventActionCollection = collections.namedtuple('ZoneEventActionCollection', 'func problem parameter')
 ZoneEventAction = {
-      1 : ZoneEventActionCollection("do_tamper",   True ),                        # Tamper Alarm
-      2 : ZoneEventActionCollection("do_tamper",   False ),                       # Tamper Restore
-      3 : ZoneEventActionCollection("do_status",   True ),                        # Zone Open
-      4 : ZoneEventActionCollection("do_status",   False ),                       # Zone Closed
-      5 : ZoneEventActionCollection("do_trigger",  True ),                        # Zone Violated (Motion)
-      6 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PANIC ),     # Panic Alarm
-      7 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PROBLEM ),   # RF Jamming
-      8 : ZoneEventActionCollection("do_tamper",   True ),                        # Tamper Open
-      9 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PROBLEM ),   # Comms Failure
-     10 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PROBLEM ),   # Line Failure
-     11 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PROBLEM ),   # Fuse
-     12 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PROBLEM ),   # Not Active
-     13 : ZoneEventActionCollection("do_battery",  True ),                        # Low Battery
-     14 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PROBLEM ),   # AC Failure
-     15 : ZoneEventActionCollection("pushChange",  AlSensorCondition.FIRE ),      # Fire Alarm
-     16 : ZoneEventActionCollection("pushChange",  AlSensorCondition.EMERGENCY ), # Emergency
-     17 : ZoneEventActionCollection("do_tamper",   True ),                        # Siren Tamper
-     18 : ZoneEventActionCollection("do_tamper",   False ),                       # Siren Tamper Restore
-     19 : ZoneEventActionCollection("do_battery",  True ),                        # Siren Low Battery
-     20 : ZoneEventActionCollection("pushChange",  AlSensorCondition.PROBLEM ),   # Siren AC Fail
+      0 : ZoneEventActionCollection("",           "none",          None ),                        # "None",
+      1 : ZoneEventActionCollection("do_tamper",  "tamper",        True ),                        # "Tamper Alarm",          
+      2 : ZoneEventActionCollection("do_tamper",  "none",          False ),                       # "Tamper Restore",        
+      3 : ZoneEventActionCollection("do_status",  "none",          True ),                        # "Zone Open",             
+      4 : ZoneEventActionCollection("do_status",  "none",          False ),                       # "Zone Closed",           
+      5 : ZoneEventActionCollection("do_trigger", "none",          True ),                        # "Zone Violated (Motion)",
+      6 : ZoneEventActionCollection("pushChange", "none",          AlSensorCondition.PANIC ),     # "Panic Alarm",           
+      7 : ZoneEventActionCollection("pushChange", "jamming",       AlSensorCondition.PROBLEM ),   # "RF Jamming",            
+      8 : ZoneEventActionCollection("do_tamper",  "tamper",        True ),                        # "Tamper Open",           
+      9 : ZoneEventActionCollection("pushChange", "comm_failure",  AlSensorCondition.PROBLEM ),   # "Communication Failure", 
+     10 : ZoneEventActionCollection("pushChange", "line_failure",  AlSensorCondition.PROBLEM ),   # "Line Failure",          
+     11 : ZoneEventActionCollection("pushChange", "fuse",          AlSensorCondition.PROBLEM ),   # "Fuse",                  
+     12 : ZoneEventActionCollection("pushChange", "not_active" ,   AlSensorCondition.PROBLEM ),   # "Not Active" ,           
+     13 : ZoneEventActionCollection("do_battery", "none",          True ),                        # "Low Battery",           
+     14 : ZoneEventActionCollection("pushChange", "ac_failure",    AlSensorCondition.PROBLEM ),   # "AC Failure",            
+     15 : ZoneEventActionCollection("pushChange", "none",          AlSensorCondition.FIRE ),      # "Fire Alarm",            
+     16 : ZoneEventActionCollection("pushChange", "none",          AlSensorCondition.EMERGENCY ), # "Emergency",             
+     17 : ZoneEventActionCollection("do_tamper",  "tamper",        True ),                        # "Siren Tamper",          
+     18 : ZoneEventActionCollection("do_tamper",  "none",          False ),                       # "Siren Tamper Restore",  
+     19 : ZoneEventActionCollection("do_battery", "none",          True ),                        # "Siren Low Battery",     
+     20 : ZoneEventActionCollection("pushChange", "ac_failure",    AlSensorCondition.PROBLEM ),   # "Siren AC Fail",         
 }
 
 ##############################################################################################################################################################################################################################################
@@ -1334,36 +1054,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
 
     log.debug("Initialising Protocol - Protocol Version {0}".format(PLUGIN_VERSION))
 
-    ##############################################################################################################################################################################################################################################
-    ##########################  Detailed Zone Type Decode  #######################################################################################################################################################################################
-    ##############################################################################################################################################################################################################################################
-
-    # MyPowerMax    ['Non-Alarm', 'Emergency', 'Flood', 'Gas', 'Delay 1', 'Delay 2', 'Inter-Follow', 'Perimeter', 'Perim-Follow', '24H Silent', '24H Audible', 'Fire', 'Interior', 'Home Delay', 'Temperature', 'Arming Key']
-
-    pmZoneType_t_EN = [
-               "Non-Alarm", "Emergency", "Flood", "Gas", "Delay 1", "Delay 2", "Interior-Follow", "Perimeter", "Perimeter-Follow",
-               "24 Hours Silent", "24 Hours Audible", "Fire", "Interior", "Home Delay", "Temperature", "Outdoor", "16" ]
-    pmZoneType_t = {
-       "EN" : pmZoneType_t_EN,
-       "NL" : [
-               "Geen alarm", "Noodtoestand", "Water", "Gas", "Vertraagd 1", "Vertraagd 2", "Interieur volg", "Omtrek", "Omtrek volg",
-               "24 uurs stil", "24 uurs luid", "Brand", "Interieur", "Thuis vertraagd", "Temperatuur", "Buiten", "16" ],
-       "FR" : [
-               "Non Alarme", "Urgence", "Inondation", "Gaz", "Temporisée 1", "Temporisée 2", "Interior-Follow", "Voie Périphérique", "Voie Périphérique d'Entrée",
-               "24 Heures Silencieuse", "24 Heures Audible", "Incendie", "Intérieure", "Home Delay", "Température", "Extérieure", "16" ],
-       "Panel" : pmZoneType_t_EN       
-    } # "Arming Key", "Guard" ??
-
-    # MyPowerMax    ['Chime OFF', 'Melody-Chime', 'Zone Name-Chime']
-
-    pmZoneChime_t_EN = ("Chime OFF", "Melody-Chime", "Zone Name-Chime")
-    pmZoneChime_t = {
-       "EN" : pmZoneChime_t_EN,
-       "NL" : ("Uit", "Muziek", "Zone"),
-       "FR" : ("Eteint", "Melodie", "Zone"),
-       "Panel" : pmZoneChime_t_EN        
-    }
-
     def __init__(self, loop=None, panelConfig : PanelConfig = None, panel_id : int = None, packet_callback: Callable = None) -> None:
         super().__init__(panel_id=panel_id)
         """Initialize class."""
@@ -1373,10 +1063,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         else:
             self.loop = asyncio.get_event_loop()
             log.debug("Establishing Protocol - Using Asyncio Event Loop")
-
-        # I think these bring them in to the instance attribute of the class and out of the class attribute scope
-        self.pmZoneType_t["Panel"] = self.pmZoneType_t_EN
-        self.pmZoneChime_t["Panel"] = self.pmZoneChime_t_EN
 
         # install the packet callback handler
         self.packet_callback = packet_callback
@@ -1398,7 +1084,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         self.ForceStandardMode = False        # INTERFACE : Get user variable from HA to force standard mode or try for PowerLink
         self.DisableAllCommands = False       # INTERFACE : Get user variable from HA to allow or disable all commands to the panel 
         self.DownloadCode = DEFAULT_DL_CODE   # INTERFACE : Set the Download Code
-        self.pmLang = 'EN'                    # INTERFACE : Get the plugin language from HA, either "EN", "FR" or "NL"
         self.SirenTriggerList = ["intruder"]  # INTERFACE : This is the trigger list that we can assume is making the siren sound
 
         # Now that the defaults have been set, update them from the panel config dictionary (that may not have all settings in)
@@ -1451,8 +1136,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
 
         #self.loop.run_in_executor(None, self._despatcher())
         self.loop.create_task(self._sequencer())
-
-
 
     def resetGlobals(self):
         ########################################################################
@@ -1540,13 +1223,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         self.ignoreF4DataMessages = False
         self.image_ignore = set()
         
-        # (re)start the PDU despatcher, the task that sends messages to the panel
-        if self.despatcherTask is not None:
-            self.despatcherTask.cancel()
-        self._emptySendQueue()
-        self.despatcherTask = self.loop.create_task(self._despatcher())
-        
-
     def updateSettings(self, newdata: PanelConfig):
         if newdata is not None:
             # log.debug("[updateSettings] Settings refreshed - Using panel config {0}".format(newdata))
@@ -1563,11 +1239,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                 if len(tmpDLCode) == 4 and type(tmpDLCode) is str:
                     self.DownloadCode = tmpDLCode[0:2] + " " + tmpDLCode[2:4]
                     log.debug("[Settings] Download Code set to {0}".format(self.DownloadCode))
-            if AlConfiguration.PluginLanguage in newdata:
-                # Get the plugin language from HA, either "EN", "FR", "NL" or "Panel"
-                self.pmLang = newdata[AlConfiguration.PluginLanguage]
-                log.debug("[Settings] Language set to {0}".format(self.pmLang))
-                self._updatelanguage()  # Update the language in the sensors settings
             if AlConfiguration.SirenTriggerList in newdata:
                 tmpList = newdata[AlConfiguration.SirenTriggerList]
                 self.SirenTriggerList = [x.lower() for x in tmpList]
@@ -1657,12 +1328,23 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         """ Clear the List, preventing any retry causing issue. """
         def empty_queue(q):
             while not q.empty():
-                q.get_nowait()
+                v = q.get_nowait() # return a tuple (priority, VisonicListEntry)
+                vle = v[1]
+                #log.debug(f"[_emptySendQueue]     {type(command)}       ({command})  ")
+                if vle.raw is not None:
+                    # Assume raw data to send is not obfuscated for now
+                    log.debug(f"[_emptySendQueue]            raw data {toString(vle.raw)}   waiting for message response {[hex(no).upper() for no in self.pmExpectedResponse]}")
+                elif vle.command is not None and vle.command.debugprint == DebugLevel.FULL:
+                    log.debug(f"[_emptySendQueue]            {vle.command.msg}    raw data {toString(vle.command.data)}   waiting for message response {[hex(no).upper() for no in self.pmExpectedResponse]}")
+                else:
+                    log.debug(f"[_emptySendQueue]            {vle.command.msg}    waiting for message response {[hex(no).upper() for no in self.pmExpectedResponse]}")
                 q.task_done()        
 
         # Clear the List
-        log.debug(f"[_emptySendQueue] Setting queue empty, it did have {self.SendQueue.qsize()} entries")
+        log.debug(f"[_emptySendQueue] Setting queue empty, it did have {self.SendQueue.qsize()} entries:")
         empty_queue(self.SendQueue)
+
+    def _clearReceiveResponseList(self):
         self.pmLastSentMessage = None
         self.pmExpectedResponse = set()
 
@@ -1670,8 +1352,6 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
     #     resets watchdog timers and asks the panel for a status
     #     if in powerlink it tries a RESTORE to re-establish powerlink comms protocols
     def _triggerRestoreStatus(self):
-        # Reset Send state (clear queue and reset flags)
-        self._emptySendQueue()
         # restart the watchdog and keep-alive counters
         self._reset_watchdog_timeout()
         self._reset_keep_alive_messages()
@@ -1867,6 +1547,9 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                         st = '[{}]'.format(', '.join(hex(x) for x in self.pmExpectedResponse))
                         log.debug("[_despatcher] ****************************** Response Timer Expired ********************************")
                         log.debug("[_despatcher]                While Waiting for: {0}".format(st))
+                        # Reset Send state (clear queue and reset flags)
+                        self._clearReceiveResponseList()
+                        #self._emptySendQueue()
                         self._triggerRestoreStatus()     # Clear message buffers and send a Restore (if in Powerlink) or Status (not in Powerlink) to the Panel
                 elif interval > RESEND_MESSAGE_TIMEOUT:
                     #   If there's a timeout then resend the previous message. If that doesn't work then dump the message and continue, but log the error
@@ -1880,6 +1563,8 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                         # tried resending once, no point in trying again so reset settings, start from scratch
                         log.debug("[_despatcher] ****************************** Resend Timer Expired ********************************")
                         log.debug("[_despatcher]                Tried Re-Sending last message but didn't work. Message is dumped")
+                        # Reset Send state (clear queue and reset flags)
+                        self._clearReceiveResponseList()
                         self._emptySendQueue()
                         # restart the watchdog and keep-alive counters
                         #self._triggerRestoreStatus()
@@ -1939,10 +1624,12 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
             log.debug("[_resetPanelInterface]   ************************************* Reset Panel Interface **************************************")
             
             # Clear the send list and empty the expected response list
+            self._clearReceiveResponseList()
             self._emptySendQueue()
 
             # Send Exit and Stop to the panel. This should quit download mode.
             self._addMessageToSendList("MSG_EXIT")
+            self._addMessageToSendList("MSG_STOP")
 
             if self.pmInitSupportedByPanel:
                 self._addMessageToSendList("MSG_INIT")
@@ -1969,6 +1656,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
             self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
             if self.DisableAllCommands:
                 # Clear the send list and empty the expected response list
+                self._clearReceiveResponseList()
                 self._emptySendQueue()
             else:
                 _resetPanelInterface()
@@ -2014,6 +1702,15 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
         def reset_vars():
             self.resetGlobals()
 
+            # (re)start the PDU despatcher, the task that sends messages to the panel
+            if self.despatcherTask is not None:
+                log.debug("[_sequencer] Cancelling _despatcher")
+                self.despatcherTask.cancel()
+            self._clearReceiveResponseList()
+            self._emptySendQueue()
+            log.debug("[_sequencer] Starting _despatcher")
+            self.despatcherTask = self.loop.create_task(self._despatcher())
+
             counter = 0                     # create a generic counter that gets reset every state change, so it can be used in a single state
             no_data_received_counter = 0
             no_packet_received_counter = 0
@@ -2028,6 +1725,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                 changedState = _sequencerState != _sequencerStatePrev
                 if changedState:       
                     # create a generic counter that gets reset every state change, so it can be used in a single state
+                    log.debug(f"[_sequencer] Changed state from {_sequencerStatePrev} to {_sequencerState}, I was in state {_sequencerStatePrev} for approx {counter} seconds")
                     counter = 0
                     # If the state has changed then do it straight away, don't do the 1 second loop
                 else:
@@ -2049,6 +1747,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                                 "[_sequencer] Visonic Plugin has suspended all operations, there is a problem with the communication with the panel (i.e. no valid packet has been received from the panel)"
                             )
                             StopAndSuspend("neverconnected")
+                            continue   # just do the while loop
 
                     if self.transport is not None:   # if the call was made to StopAndSuspend("neverconnected") above then transport will be None
                         if self.lastRecvTimeOfPanelData is None:  ## has any data been received from the panel yet?
@@ -2059,6 +1758,7 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                                     "[_sequencer] Visonic Plugin has suspended all operations, there is a problem with the communication with the panel (i.e. no data has been received from the panel)"
                                 )
                                 StopAndSuspend("neverconnected")
+                                continue   # just do the while loop
                         else:  # Data has been received from the panel but check when it was last received
                             # calc time difference between now and when data was last received
                             interval = self._getUTCTimeFunction() - self.lastRecvTimeOfPanelData
@@ -2068,458 +1768,471 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
                                     "[_sequencer] Visonic Plugin has suspended all operations, there is a problem with the communication with the panel (i.e. data has not been received from the panel in " + str(interval) + ")"
                                 )
                                 StopAndSuspend("disconnected")
+                                continue   # just do the while loop
 
-                    if not self.suspendAllOperations:  ## To make sure as we could have stopped and suspended
-                        
-                        if _sequencerState not in [SequencerType.DoingStandard, SequencerType.DoingStandardPlus, SequencerType.DoingPowerlink, SequencerType.DoingPowerlinkBridge] or changedState or counter % 120 == 0:
-                            # When we reach 1 of the 3 final states then stop logging it, but then output every 2 minutes
-                            log.debug(f"[_sequencer] Mode = {str(_sequencerState)}     counter={counter}")
+                    if _sequencerState not in [SequencerType.DoingStandard, SequencerType.DoingStandardPlus, SequencerType.DoingPowerlink, SequencerType.DoingPowerlinkBridge] or changedState or counter % 120 == 0:
+                        # When we reach 1 of the 3 final states then stop logging it, but then output every 2 minutes
+                        log.debug(f"[_sequencer] Mode = {str(_sequencerState)}     counter={counter}")
 
-                        if self.loopbackTest:
+                    if self.loopbackTest:
 
-                            # This supports the loopback test
-                            await asyncio.sleep(2.0)
-                            self._emptySendQueue()
-                            self._addMessageToSendList("MSG_STOP")
-                            continue   # just do the while loop
+                        # This supports the loopback test
+                        await asyncio.sleep(2.0)
+                        self._clearReceiveResponseList()
+                        self._emptySendQueue()
+                        self._addMessageToSendList("MSG_STOP")
+                        continue   # just do the while loop
 
-                        elif _sequencerState == SequencerType.LookForPowerlinkBridge:  ################################################################ LookForPowerlinkBridge ####################################################
-                            if not self.ForceStandardMode:
-                                for i in range(0,2):
-                                    command = 1   # Get Status command
-                                    param = 0     # Irrelevant
-                                    self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
-                                await asyncio.sleep(1.0)
-                            _sequencerState = SequencerType.InitialisePanel
-
-                        elif _sequencerState == SequencerType.InitialisePanel:          ################################################################ Initialising ####################################################
-                            reset_vars()
-                            await asyncio.sleep(1.0)
-                            _resetPanelInterface()
-                            await asyncio.sleep(1.0)
-                            _sequencerState = SequencerType.WaitingForPanelDetails
-
-                        elif _sequencerState == SequencerType.WaitingForPanelDetails:  ################################################################ WaitingForPanelDetails ####################################################
-                            
-                            # Take care of the first part of initialisation
-                            if await processDownloadStateMessages() != PanelErrorStates.AllGood:
-                                _sequencerState = SequencerType.InitialisePanel
-                            elif self.pmGotPanelDetails:          # Got 3C
-                                log.debug("[_sequencer] Got panel details")
-                                if self.AutoSyncTime:  # should we sync time between the HA and the Alarm Panel
-                                    self.setTimeInPanel()
-                                if self.ForceStandardMode:
-                                    self._addMessageToSendList("MSG_EXIT")  # when we receive a 3C we know that the panel is in download mode, so exit download mode
-                                    _sequencerState = SequencerType.AimingForStandard
-                                else:
-                                    self.firstSendOfDownloadEprom = self._getUTCTimeFunction()
-                                    _sequencerState = SequencerType.InitialiseEPROMDownload
-                            elif counter >= 4:     # 4 seconds to get panel data
-                                _sequencerState = SequencerType.InitialisePanel
-
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.InitialiseEPROMDownload:  ################################################################ InitialiseEPROMDownload ##############################################
-                            
-                            interval = self._getUTCTimeFunction() - self.firstSendOfDownloadEprom
-                            #log.debug("[_sequencer] interval={0}  timeout={1}   self.firstSendOfDownloadEprom(UTC)={2}    timenow(UTC)={3}".format(interval, DOWNLOAD_TIMEOUT, self.firstSendOfDownloadEprom, self._getUTCTimeFunction()))
-
-                            if self.DownloadCounter >= DOWNLOAD_RETRY_COUNT or (not EEPROM_DOWNLOAD_ALL and interval > timedelta(seconds=DOWNLOAD_TIMEOUT)): 
-                                # Give it DOWNLOAD_RETRY_COUNT attempts start the download
-                                # Give it DOWNLOAD_TIMEOUT seconds to complete the download
-                                log.warning("[Controller] ********************** Download Timer has Expired, Download has taken too long *********************")
-                                log.warning("[Controller] ************************************* Going to standard mode ***************************************")
-                                self.sendPanelUpdate(AlCondition.DOWNLOAD_TIMEOUT)                 # download timer expired
-                                
-                                _sequencerState = SequencerType.AimingForStandard
-                            else:
-                                # Populate the full list of EEPROM blocks
-                                self._populateEPROMDownload()
-                                # Send the first EEPROM block to the panel to retrieve
-                                if len(self.myDownloadList) == 0:
-                                    # This is the message to tell us that the panel has finished download mode, so we too should stop download mode
-                                    log.debug("[_readPanelSettings] Download Complete")
-                                    self.triggeredDownload = False
-                                    self.pmDownloadInProgress = False
-                                    self.pmDownloadMode = False
-                                    self.pmDownloadComplete = True
-                                    _sequencerState = SequencerType.EPROMDownloadComplete
-                                else:
-                                    if self.PowerLinkBridgeConnected:
-                                        if self.PowerLinkBridgeStealth:
-                                            _sequencerState = SequencerType.TriggerEPROMDownload
-                                            log.debug("[_sequencer] Bridge in Stealth, continuing to TriggerEPROMDownload")
-                                        else:
-                                            log.debug("[_sequencer] Sending command to Bridge - Please Turn Stealth ON")
-                                            command = 2   # Stealth command
-                                            param = 1     # Enter it
-                                            self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to go in to exclusive mode
-                                            command = 1   # Get Status command
-                                            param = 0     # Irrelevant
-                                            self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
-                                    else:
-                                        _sequencerState = SequencerType.TriggerEPROMDownload
-                                
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.TriggerEPROMDownload:  ################################################################ TriggerEPROMDownload ##############################################
-
-                            self._emptySendQueue()
-                            self.DownloadCounter = self.DownloadCounter + 1
-                            log.debug("[_sequencer] Asking for panel EEPROM")
-                            self.setNextDownloadCode() # Set the next self.DownloadCode to try
-                            self._addMessageToSendList("MSG_DOWNLOAD", options=[ [3, convertByteArray(self.DownloadCode)] ])  #
-                            # We got a first response, now we can Download the panel EEPROM settings
-                            self.lastSendOfDownloadEprom = self._getUTCTimeFunction()
-                            # Kick off the download sequence and set associated variables
-                            self.pmExpectedResponse = set()
-                            self.PanelMode = AlPanelMode.DOWNLOAD
-                            self.PanelState = AlPanelStatus.DOWNLOADING  # Downloading
-                            self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
-                            log.debug("[_readPanelSettings] Download Ongoing")
-                            self.triggeredDownload = True
-                            self.pmDownloadInProgress = True
-                            self._addMessageToSendList("MSG_DL", options=[ [1, self.myDownloadList.pop(0)] ])  # Read the next block of EEPROM data
-                            lastrecv = self.lastRecvTimeOfPanelData
-                            _sequencerState = SequencerType.StartedEPROMDownload
-
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.StartedEPROMDownload:  ################################################################ StartedEPROMDownload ##############################################
-                            
-                            # We got a first response, now we can Download the panel EEPROM settings
-                            if (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
-                                if s in [PanelErrorStates.DownloadAccessDenied, PanelErrorStates.DownloadRetryReceived, PanelErrorStates.TimeoutReceived]:
-                                    _sequencerState = SequencerType.InitialiseEPROMDownload
-                                else:
-                                    _sequencerState = SequencerType.InitialisePanel
-                            else:
-                                interval = self._getUTCTimeFunction() - self.lastSendOfDownloadEprom
-                                log.debug("[_sequencer] interval={0}  td={1}   self.lastSendOfDownloadEprom(UTC)={2}    timenow(UTC)={3}".format(interval, DOWNLOAD_RETRY_DELAY, self.lastSendOfDownloadEprom, self._getUTCTimeFunction()))
-                                
-                                if interval > timedelta(seconds=DOWNLOAD_RETRY_DELAY):            # Give it this number of seconds to start the downloading
-                                    _sequencerState = SequencerType.InitialiseEPROMDownload
-                                elif lastrecv != self.lastRecvTimeOfPanelData and (self.pmDownloadInProgress or self.pmDownloadComplete):
-                                    _sequencerState = SequencerType.DoingEPROMDownload
-                                    
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.DoingEPROMDownload:  ################################################################ DoingEPROMDownload ##############################################
-                            
-                            if (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
-                                if s in [PanelErrorStates.DownloadAccessDenied, PanelErrorStates.DownloadRetryReceived, PanelErrorStates.TimeoutReceived]:
-                                    _sequencerState = SequencerType.InitialiseEPROMDownload
-                                else:
-                                    _sequencerState = SequencerType.InitialisePanel
-                            elif self.pmDownloadComplete:
-                                _sequencerState = SequencerType.EPROMDownloadComplete
-                            else:
-                                intervalStart = self._getUTCTimeFunction() - self.lastSendOfDownloadEprom
-                                intervalLastReceive = self._getUTCTimeFunction() - self.lastRecvTimeOfPanelData
-                                #log.debug(f"[_sequencer] timenow={self._getUTCTimeFunction()}   intervalStart={intervalStart}  self.lastSendOfDownloadEprom={self.lastSendOfDownloadEprom}")
-                                #log.debug(f"[_sequencer]                                        intervalLastReceive={intervalLastReceive}  self.lastRecvTimeOfPanelData={self.lastRecvTimeOfPanelData}")
-                                if intervalStart > timedelta(seconds=60):                         # Download hasn't finished in this timeout
-                                    _sequencerState = SequencerType.InitialisePanel
-                                elif intervalLastReceive > timedelta(seconds=3):                  # 3 seconds since we last received a byte of data from the panel
-                                    _sequencerState = SequencerType.InitialisePanel
-
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.EPROMDownloadComplete:  ################################################################ EPROMDownloadComplete ##############################################
-                            
-                            # Check the panel type from EPROM against the panel type from the 3C message to give a basic test of the EPROM download
-                            pmPanelTypeNr = self._lookupEpromSingle("panelTypeCode")    
-                            if pmPanelTypeNr is None or (pmPanelTypeNr is not None and pmPanelTypeNr == 0xFF):
-                                log.error(f"[_sequencer] Lookup of panel type string and model from the EEPROM failed, assuming EEPROM download failed {pmPanelTypeNr=}, going to Standard Mode")
-                                _sequencerState = SequencerType.AimingForStandard
-                            elif self.PanelType is not None and self.PanelType != pmPanelTypeNr:
-                                log.error(f"[_sequencer] Panel Type not set from EEPROM, assuming EEPROM download failed {pmPanelTypeNr=}, going to Standard Mode")
-                                _sequencerState = SequencerType.AimingForStandard
-                            else:
-                                # Process the EPROM data
-                                self._processEPROMSettings()
-                                self.sendPanelUpdate(AlCondition.DOWNLOAD_SUCCESS)   # download completed successfully
-                                if self.gotValidUserCode():
-
-                                    if self.PowerLinkBridgeConnected:
-                                        log.debug("[_sequencer] Sending command to Bridge - Stealth OFF")
-                                        command = 2   # Stealth command
-                                        param = 0     # Exit it
-                                        self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to go in to exclusive mode
-                                        command = 1   # Get Status command
-                                        param = 0     # Irrelevant
-                                        self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
-                                        self.PanelMode = AlPanelMode.POWERLINK_BRIDGED
-                                        _sequencerState = SequencerType.DoingPowerlinkBridge
-                                        
-                                    else:
-                                        self.PanelMode = AlPanelMode.STANDARD_PLUS
-                                        _sequencerState = SequencerType.EnrollingPowerlink
-                                else:
-                                    _sequencerState = SequencerType.AimingForStandard
-
-                            self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.EnrollingPowerlink:  ################################################################ EnrollingPowerlink ##############################################
-                            
-                            if self.PanelMode == AlPanelMode.POWERLINK:
-                                _sequencerState = SequencerType.DoingPowerlink         # Very unlikely but possible
-                            elif counter == 10:
-                                self.PanelMode = AlPanelMode.STANDARD_PLUS                    # After 10 attempts to enrol, stay in StandardPlus Emulation Mode
-                                _sequencerState = SequencerType.DoingStandardPlus
-                            else:
-                                self._emptySendQueue()
-                                self._addMessageToSendList("MSG_EXIT")
-                                log.debug(f"[_sequencer] Try to auto enroll (panel {self.PanelModel})  attempt {counter}")
-                                #self._addMessageToSendList("MSG_EXIT")  # Exit download mode
-                                self._sendMsgENROLL()  #  Try to enroll with the Download Code that worked for Downloading the EPROM
-                                _sequencerState = SequencerType.WaitingForEnrollSuccess
-                            
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.WaitingForEnrollSuccess:  ################################################################ WaitingForEnrollSuccess ##############################################
-                            
-                            if (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
-                                self.PanelMode = AlPanelMode.STANDARD_PLUS
-                                _sequencerState = SequencerType.EnrollingPowerlink
-                            elif self.PanelMode == AlPanelMode.POWERLINK:
-                                _sequencerState = SequencerType.DoingPowerlink
-                            elif counter == (MAX_TIME_BETWEEN_POWERLINK_ALIVE if self.receivedPowerlinkAcknowledge else 3):   
-                                # once we receive a powerlink acknowledge then we wait for the I'm alive message (usually every 30 seconds from the panel)
-                                self.PanelMode = AlPanelMode.STANDARD_PLUS
-                                self.setNextDownloadCode() # We're going back to Enrol so set the next self.DownloadCode to try
-                                _sequencerState = SequencerType.EnrollingPowerlink
-
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.DoingPowerlinkBridge:  ################################################################ DoingPowerlinkBridge ##############################################
-
-                            if self.PowerLinkBridgeConnected:
-                                if self.PowerLinkBridgeStealth:
-                                    log.debug("[_sequencer] Sending commands to Bridge to exit stealth and get status")
-                                    command = 2   # Stealth command
-                                    param = 0     # Exit it
-                                    self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to exit exclusive mode
-                                    command = 1   # Get Status command
-                                    param = 0     # Irrelevant
-                                    self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
-                                    self.PowerLinkBridgeStealth = False # To make certain it's disabled
-    
-                            if counter % 30 == 0:  # approx every 30 seconds
+                    elif _sequencerState == SequencerType.LookForPowerlinkBridge:  ################################################################ LookForPowerlinkBridge ####################################################
+                        reset_vars()
+                        if not self.ForceStandardMode:
+                            for i in range(0,2):
                                 command = 1   # Get Status command
                                 param = 0     # Irrelevant
-                                self._addMessageToSendList("MSG_PL_BRIDGE", options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
+                                self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
+                            await asyncio.sleep(1.0)
+                        _sequencerState = SequencerType.InitialisePanel
+                        continue   # just do the while loop
 
-                        elif _sequencerState == SequencerType.DoingStandardPlus:  ################################################################ DoingStandardPlus ##############################################
-                            
-                            # Put all the special standard plus mode things here
-                            # Keep alive functionality
-                            self.keep_alive_counter = self.keep_alive_counter + 1
-                            if self.SendQueue.empty() and not self.pmDownloadMode and self.keep_alive_counter >= self.KeepAlivePeriod:  #
-                                self._reset_keep_alive_messages()
-                                self._addMessageToSendList ("MSG_STATUS_SEN")
+                    elif _sequencerState == SequencerType.InitialisePanel:          ################################################################ Initialising ####################################################
+                        await asyncio.sleep(1.0)
+                        _resetPanelInterface()
+                        await asyncio.sleep(1.0)
+                        _sequencerState = SequencerType.WaitingForPanelDetails
+                        continue   # just do the while loop
 
-                            if self.PanelMode == AlPanelMode.POWERLINK:
-                                _sequencerState = SequencerType.DoingPowerlink
-
-                        elif _sequencerState == SequencerType.AimingForStandard:  ############################################################ AimingForStandard ##############################################
-                            
-                            self.PanelMode = AlPanelMode.STANDARD
-                            if self.isPowerMaster(): # PowerMaster so get B0 data
-                                # Powerlink panel so ask the panel for B0 data to get panel details, as these can be asked for and received within download mode we can do it straight away
-                                log.debug("[_sequencer] Adding to wanted list")
-                                #self.B0_Message_Wanted.update([0x20, 0x21, 0x2d, 0x1f, 0x07, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x11, 0x13, 0x14, 0x15, 0x18, 0x1a, 0x19, 0x1b, 0x1d, 0x2f, 0x31, 0x33, 0x1e, 0x24, 0x02, 0x23, 0x3a, 0x4b])
-
-                                # Request User Codes                
-                                #PM_Data = convertByteArray("b0 01 35 07 02 ff 08 ff 02 08 00 43")   # Ask for panel settings with 08 00 Usercodes, 00 as the counter
-                                #CS = self._calculateCRC(PM_Data)   # returns a bytearray with a single byte
-                                #To_Send = bytearray([0x0d]) + PM_Data + CS + bytearray([0x0a])   # Add all the bytearrays together to create the raw PDU
-                                #self._addMessageToSendList(To_Send) # , res = [0xB0])   # Wait for B0
-
-                                # Request Sensor Information and State
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_NAMES"])         # 21
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_TYPES"])         # 2D
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["SENSOR_STATUS"])      # 1F
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["PANEL_STATE"])        # 24
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_LAST_EVENT"])    # 4B
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_OPENCLOSE"])     # 18
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_TEMPS"])         # 3D  
-                                self.B0_Message_Wanted.add(pmSendMsgB0_t["SENSOR_ENROL"])       # 1D
-                                s = self._create_B0_Data_Request(taglist = list(self.B0_Message_Wanted))
-                                # Added twice intentionally to try to make sure we get the messages back
-                                self._addMessageToSendList(s)
-                                self._addMessageToSendList(s)
-                            else:    # PowerMax get ZONE_NAMES, ZONE_TYPES etc
-                                self._addMessageToSendList("MSG_ZONENAME")
-                                self._addMessageToSendList("MSG_ZONETYPE")
-                            # only if we meet the criteria do we move on to the next step.  Until then just do it
-                            _gotoStandardModeStopDownload()
-                            _sequencerState = SequencerType.DoingStandard
-                            continue   # just do the while loop
-
-                        elif _sequencerState == SequencerType.DoingStandard:  ################################################################ DoingStandard ##############################################
-                            # Put all the special standard mode things here
-                            # Keep alive functionality
-                            self.keep_alive_counter = self.keep_alive_counter + 1
-                            if self.SendQueue.empty() and not self.pmDownloadMode and self.keep_alive_counter >= self.KeepAlivePeriod:  #
-                                self._reset_keep_alive_messages()
-                                self._addMessageToSendList ("MSG_STATUS_SEN")
-                            
-                            # Do most of this for ALL Panel Types
-                            # Only check these every 180 seconds
-                            if (counter % 180) == 0:
-                                if self.PanelState == AlPanelStatus.UNKNOWN:
-                                    log.debug("[_sequencer] ****************************** Getting Panel Status ********************************")
-                                    self._addMessageToSendList("MSG_STATUS_SEN")
-                                elif self.PanelState == AlPanelStatus.DOWNLOADING:
-                                    log.debug("[_sequencer] ****************************** Exit Download Kicker ********************************")
-                                    self._addMessageToSendList("MSG_EXIT", urgent = True)
-                                elif not self.pmGotPanelDetails:
-                                    log.debug("[_sequencer] ****************************** Asking For Panel Details ****************************")
-                                    _sequencerState = SequencerType.InitialisePanel
-                                else:
-                                    # The first time this may create sensors (for PowerMaster, especially those in the range Z33 to Z64 as the A5 message will not have created them)
-                                    # Subsequent calls make sure we have all zone names, zone types and the sensor list
-                                    self._updateSensorNamesAndTypes()
-
-                        elif _sequencerState == SequencerType.DoingPowerlink:  ################################################################ DoingPowerlink ##############################################
-                            self.PanelMode = AlPanelMode.POWERLINK
-                            # Put all the special powerlink mode things here
-
-                            # Keep alive functionality
-                            self.keep_alive_counter = self.keep_alive_counter + 1    # This is for me sending to the panel
-                            self.powerlink_counter = self.powerlink_counter + 1      # This gets reset to 0 when I receive I'm Alive from the panel
-
-                            if self.powerlink_counter > POWERLINK_IMALIVE_RETRY_DELAY:
-                                # Go back to Std+ and re-enroll
-                                log.debug(f"[_sequencer] ****************************** Not Received I'm Alive From Panel for {POWERLINK_IMALIVE_RETRY_DELAY} Seconds, going to Std+ **************")
-                                self.receivedPowerlinkAcknowledge = False
-                                self.PanelMode = AlPanelMode.STANDARD_PLUS
-                                _sequencerState = SequencerType.EnrollingPowerlink
-                                continue
-
-                            if self.SendQueue.empty() and not self.pmDownloadMode and self.keep_alive_counter >= self.KeepAlivePeriod:  #
-                                # Every self.KeepAlivePeriod seconds, unless watchdog has been reset
-                                self._reset_keep_alive_messages()
-                                # Send I'm Alive to the panel so it knows we're still here
-                                self._addMessageToSendList ("MSG_ALIVE")
-
-                        if self.AutoSyncTime and self.PanelMode in [AlPanelMode.STANDARD_PLUS, AlPanelMode.POWERLINK]:   # AlPanelMode.POWERLINK_BRIDGED cannot do GetTime as it's an 0xAB message
-                            #  We set the time and then check it periodically, and then set it again if different by more than 5 seconds
-                            if counter % 14400 == 0:      # every 4 hours (approx)
-                                # Get the time from the panel (this will compare to local time and set the panel time if different)
-                                self._addMessageToSendList("MSG_GETTIME")
-                            if counter == a_day - 1 or (counter % 10 == 0 and (self.Panel_Integration_Time_Difference is None or (self.Panel_Integration_Time_Difference is not None and abs(self.Panel_Integration_Time_Difference.total_seconds()) > 5))):
-                                if counter == a_day - 1:
-                                    log.debug("[_sequencer]    Auto sync time, counter = a_day - 1")
-                                t = self._getTimeFunction()
-                                if t.year > 2020:
-                                    log.debug("[_sequencer]    Local time is {0}".format(t))
-                                    year = t.year - 2000
-                                    values = [t.second, t.minute, t.hour, t.day, t.month, year]
-                                    timePdu = bytearray(values)
-                                    log.debug("[_sequencer]        Setting Time " + toString(timePdu))
-                                    self._addMessageToSendList("MSG_BUMP", urgent = True)    # by setting urgent on both this will get sent first
-                                    self._addMessageToSendList("MSG_SETTIME", options=[ [3, timePdu] ], urgent = True)      # Set the time asap so it syncs as close as possible to my time
-                                else:
-                                    log.debug("[_sequencer] Please correct your local time.")
-
-                                # Get the time from the panel (this will compare to local time and set the panel time if different)
-                                self._addMessageToSendList("MSG_GETTIME", urgent = True)
-                                if t.year > 2020:
-                                    self._addMessageToSendList("MSG_EXIT", urgent = True)
-
-                        #############################################################################################################################################################
-                        ####### Drop through to here to do generic code for DoingStandard, DoingStandardPlus and DoingPowerlink #####################################################
-                        #############################################################################################################################################################
-
-                        if self.AccessDeniedReceived:
-                            self.AccessDeniedReceived = False
-                            if self.AccessDeniedMessage is not None:
-                                lastCommandData = self.AccessDeniedMessage.command.data
-                                log.debug("[_sequencer]                AccessDenied last command {0}".format(toString(lastCommandData)))
-                                self._reset_watchdog_timeout()
-                                if lastCommandData is not None:
-                                    self.pmExpectedResponse = set()  ## really we should look at the response from the last command and only remove the appropriate responses from this list
-                                    if lastCommandData[0] != 0xAB and lastCommandData[0] & 0xA0 == 0xA0:  # this will match A0, A1, A2, A3 etc but not 0xAB
-                                        log.debug("[_sequencer] Attempt to send a command message to the panel that has been denied, wrong pin code used")
-                                        # INTERFACE : tell user that wrong pin has been used
-                                        self.sendPanelUpdate(AlCondition.PIN_REJECTED)  # push changes through to the host, the pin has been rejected
-                                    elif lastCommandData[0] != 0xAB and lastCommandData[0] != 0x0B:  # Powerlink command and the Stop Command
-                                        log.debug("[_sequencer] Attempt to send a command message to the panel that has been rejected")
-                                        self.sendPanelUpdate(AlCondition.COMMAND_REJECTED)  # push changes through to the host, something has been rejected (other than the pin)
-
-                        # Make sure that the Access Denied above is processed first
-                        if (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
-                            if s in [PanelErrorStates.DownloadRetryReceived, PanelErrorStates.Exit]:
-                                log.debug(f"[_sequencer] Received a Download Panel state and dont know why {str(s)}")
-                            elif s == PanelErrorStates.TimeoutReceived:
-                                log.debug(f"[_sequencer] Received a Panel state Timeout")
-                                self._triggerRestoreStatus() # Clear message buffers and send a Restore (if in Powerlink) or Status (not in Powerlink) to the Panel
-                            else:
-                                log.debug(f"[_sequencer] Received an unknown Panel state and dont know why {str(s)}")
-
-                        # Watchdog functionality
-                        self.watchdog_counter = self.watchdog_counter + 1
-                        # every iteration, decrement all WATCHDOG_MAXIMUM_EVENTS watchdog counters (loop time is 1 second approx, doesn't have to be accurate)
-                        watchdog_list = [x - 1 if x > 0 else 0 for x in watchdog_list]
-
-                        if self.watchdog_counter >= WATCHDOG_TIMEOUT:  #  the loop runs at 1 second
-                            # Check to see if the watchdog timer has expired
-                            # watchdog timeout
-                            log.debug("[_sequencer] ****************************** WatchDog Timer Expired ********************************")
-                            self._reset_watchdog_timeout()
-                            self._reset_keep_alive_messages()
-
-                            # Total Watchdog timeouts
-                            self.WatchdogTimeoutCounter = self.WatchdogTimeoutCounter + 1
-                            # Total Watchdog timeouts in last 24 hours. Total up the entries > 0
-                            self.WatchdogTimeoutPastDay = 1 + sum(1 if x > 0 else 0 for x in watchdog_list)    # in range 1 to 11
-
-                            # move to the next position which is the oldest entry in the list
-                            watchdog_pos = (watchdog_pos + 1) % WATCHDOG_MAXIMUM_EVENTS
-
-                            # When watchdog_list[watchdog_pos] > 0 then the 24 hour period from the timeout WATCHDOG_MAXIMUM_EVENTS times ago hasn't decremented to 0.
-                            #    So it's been less than 1 day for the previous WATCHDOG_MAXIMUM_EVENTS timeouts
-                            if not self.StopTryingDownload and watchdog_list[watchdog_pos] > 0:
-                                log.debug("[_sequencer]               **************** Going to Standard (Plus) Mode and re-establish panel connection ***************")
-                                self.sendPanelUpdate(AlCondition.WATCHDOG_TIMEOUT_GIVINGUP)   # watchdog timer expired, going to standard (plus) mode
+                    elif _sequencerState == SequencerType.WaitingForPanelDetails:  ################################################################ WaitingForPanelDetails ####################################################
+                        
+                        # Take care of the first part of initialisation
+                        if await processDownloadStateMessages() != PanelErrorStates.AllGood:
+                            _sequencerState = SequencerType.InitialisePanel
+                        elif self.pmGotPanelDetails:          # Got 3C
+                            log.debug("[_sequencer] Got panel details")
+                            #if self.AutoSyncTime:  # should we sync time between the HA and the Alarm Panel
+                            #    self.setTimeInPanel()
+                            if self.ForceStandardMode:
+                                self._addMessageToSendList("MSG_EXIT")  # when we receive a 3C we know that the panel is in download mode, so exit download mode
                                 _sequencerState = SequencerType.AimingForStandard
                             else:
-                                log.debug("[_sequencer]               ******************* Trigger Restore Status *******************")
-                                self.sendPanelUpdate(AlCondition.WATCHDOG_TIMEOUT_RETRYING)   # watchdog timer expired, going to try again
-                                self._triggerRestoreStatus() # Clear message buffers and send a Restore (if in Powerlink) or Status (not in Powerlink) to the Panel
+                                self.firstSendOfDownloadEprom = self._getUTCTimeFunction()
+                                _sequencerState = SequencerType.InitialiseEPROMDownload
+                        elif counter >= 4:     # 4 seconds to get panel data
+                            _sequencerState = SequencerType.InitialisePanel
 
-                            # Overwrite the oldest entry and set it to 1 day in seconds. Keep the stats going in all modes for the statistics
-                            #    Note that the asyncio 1 second sleep does not create an accurate time and this may be slightly more than 24 hours.
-                            watchdog_list[watchdog_pos] = 60 * 60 * 24  # seconds in 1 day
-                            log.debug("[_sequencer]               Watchdog counter array, current=" + str(watchdog_pos))
-                            log.debug("[_sequencer]                       " + str(watchdog_list))
+                        continue   # just do the while loop
 
-                        #elif self.ImageManager.isImageDataInProgress():
-                        #    # Manage the download of the F4 messages for Camera PIRs
-                        #    # As this does not use acknowledges or checksums then prevent the expected response timer from kicking in
-                        #    self.ImageManager.terminateIfExceededTimeout(40)
+                    elif _sequencerState == SequencerType.InitialiseEPROMDownload:  ################################################################ InitialiseEPROMDownload ##############################################
+                        
+                        interval = self._getUTCTimeFunction() - self.firstSendOfDownloadEprom
+                        #log.debug("[_sequencer] interval={0}  timeout={1}   self.firstSendOfDownloadEprom(UTC)={2}    timenow(UTC)={3}".format(interval, DOWNLOAD_TIMEOUT, self.firstSendOfDownloadEprom, self._getUTCTimeFunction()))
+
+                        if self.DownloadCounter >= DOWNLOAD_RETRY_COUNT or (not EEPROM_DOWNLOAD_ALL and interval > timedelta(seconds=DOWNLOAD_TIMEOUT)): 
+                            # Give it DOWNLOAD_RETRY_COUNT attempts start the download
+                            # Give it DOWNLOAD_TIMEOUT seconds to complete the download
+                            log.warning("[Controller] ********************** Download Timer has Expired, Download has taken too long *********************")
+                            log.warning("[Controller] ************************************* Going to standard mode ***************************************")
+                            self.sendPanelUpdate(AlCondition.DOWNLOAD_TIMEOUT)                 # download timer expired
                             
-                        # log.debug("[_sequencer] is {0}".format(self.watchdog_counter))
+                            _sequencerState = SequencerType.AimingForStandard
+                        else:
+                            # Populate the full list of EEPROM blocks
+                            self._populateEPROMDownload()
+                            # Send the first EEPROM block to the panel to retrieve
+                            if len(self.myDownloadList) == 0:
+                                # This is the message to tell us that the panel has finished download mode, so we too should stop download mode
+                                log.debug("[_readPanelSettings] Download Complete")
+                                self.triggeredDownload = False
+                                self.pmDownloadInProgress = False
+                                self.pmDownloadMode = False
+                                self.pmDownloadComplete = True
+                                _sequencerState = SequencerType.EPROMDownloadComplete
+                            else:
+                                if self.PowerLinkBridgeConnected:
+                                    if self.PowerLinkBridgeStealth:
+                                        _sequencerState = SequencerType.TriggerEPROMDownload
+                                        log.debug("[_sequencer] Bridge in Stealth, continuing to TriggerEPROMDownload")
+                                    else:
+                                        log.debug("[_sequencer] Sending command to Bridge - Please Turn Stealth ON")
+                                        command = 2   # Stealth command
+                                        param = 1     # Enter it
+                                        self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to go in to exclusive mode
+                                        command = 1   # Get Status command
+                                        param = 0     # Irrelevant
+                                        self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
+                                else:
+                                    _sequencerState = SequencerType.TriggerEPROMDownload
                             
-                        if self.isPowerMaster():
-                            if self.PanelMode in [AlPanelMode.STANDARD, AlPanelMode.STANDARD_PLUS, AlPanelMode.POWERLINK_BRIDGED, AlPanelMode.POWERLINK]:
-                                b0_send_wanted_counter = b0_send_wanted_counter + 1
-                                if b0_send_wanted_counter >= 3:
-                                    b0_send_wanted_counter = 0
-                                    if len(self.B0_Message_Wanted) > 0:
-                                        log.debug(f"[_sequencer] ****************************** Asking For B0_Message_Wanted **************************** {self.B0_Message_Wanted}")
-                                        s = self._create_B0_Data_Request(taglist = list(self.B0_Message_Wanted))
-                                        self._addMessageToSendList(s)
+                        continue   # just do the while loop
 
-                        if self.PanelMode in [AlPanelMode.STANDARD, AlPanelMode.STANDARD_PLUS, AlPanelMode.POWERLINK, AlPanelMode.POWERLINK_BRIDGED, AlPanelMode.MINIMAL_ONLY]:
-                            # Dump all sensors to the file every 60 seconds (1 minute)
-                            log_sensor_state_counter = log_sensor_state_counter + 1
-                            if log_sensor_state_counter >= 60:
-                                log_sensor_state_counter = 0
-                                self._dumpSensorsToLogFile()
+                    elif _sequencerState == SequencerType.TriggerEPROMDownload:  ################################################################ TriggerEPROMDownload ##############################################
+
+                        self._clearReceiveResponseList()
+                        self._emptySendQueue()
+                        self.DownloadCounter = self.DownloadCounter + 1
+                        log.debug("[_sequencer] Asking for panel EEPROM")
+                        self.setNextDownloadCode() # Set the next self.DownloadCode to try
+                        self._addMessageToSendList("MSG_DOWNLOAD", options=[ [3, convertByteArray(self.DownloadCode)] ])  #
+                        # We got a first response, now we can Download the panel EEPROM settings
+                        self.lastSendOfDownloadEprom = self._getUTCTimeFunction()
+                        # Kick off the download sequence and set associated variables
+                        self.pmExpectedResponse = set()
+                        self.PanelMode = AlPanelMode.DOWNLOAD
+                        self.PanelState = AlPanelStatus.DOWNLOADING  # Downloading
+                        self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
+                        log.debug("[_readPanelSettings] Download Ongoing")
+                        self.triggeredDownload = True
+                        self.pmDownloadInProgress = True
+                        self._addMessageToSendList("MSG_DL", options=[ [1, self.myDownloadList.pop(0)] ])  # Read the next block of EEPROM data
+                        lastrecv = self.lastRecvTimeOfPanelData
+                        _sequencerState = SequencerType.StartedEPROMDownload
+
+                        continue   # just do the while loop
+
+                    elif _sequencerState == SequencerType.StartedEPROMDownload:  ################################################################ StartedEPROMDownload ##############################################
+                        
+                        # We got a first response, now we can Download the panel EEPROM settings
+                        if (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
+                            if s in [PanelErrorStates.DownloadAccessDenied, PanelErrorStates.DownloadRetryReceived, PanelErrorStates.TimeoutReceived]:
+                                _sequencerState = SequencerType.InitialiseEPROMDownload
+                            else:
+                                _sequencerState = SequencerType.InitialisePanel
+                        else:
+                            interval = self._getUTCTimeFunction() - self.lastSendOfDownloadEprom
+                            log.debug("[_sequencer] interval={0}  td={1}   self.lastSendOfDownloadEprom(UTC)={2}    timenow(UTC)={3}".format(interval, DOWNLOAD_RETRY_DELAY, self.lastSendOfDownloadEprom, self._getUTCTimeFunction()))
+                            
+                            if interval > timedelta(seconds=DOWNLOAD_RETRY_DELAY):            # Give it this number of seconds to start the downloading
+                                _sequencerState = SequencerType.InitialiseEPROMDownload
+                            elif lastrecv != self.lastRecvTimeOfPanelData and (self.pmDownloadInProgress or self.pmDownloadComplete):
+                                _sequencerState = SequencerType.DoingEPROMDownload
+                                
+                        continue   # just do the while loop
+
+                    elif _sequencerState == SequencerType.DoingEPROMDownload:  ################################################################ DoingEPROMDownload ##############################################
+                        
+                        if (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
+                            if s in [PanelErrorStates.DownloadAccessDenied, PanelErrorStates.DownloadRetryReceived, PanelErrorStates.TimeoutReceived]:
+                                _sequencerState = SequencerType.InitialiseEPROMDownload
+                            else:
+                                _sequencerState = SequencerType.InitialisePanel
+                        elif self.pmDownloadComplete:
+                            _sequencerState = SequencerType.EPROMDownloadComplete
+                        else:
+                            intervalStart = self._getUTCTimeFunction() - self.lastSendOfDownloadEprom
+                            intervalLastReceive = self._getUTCTimeFunction() - self.lastRecvTimeOfPanelData
+                            #log.debug(f"[_sequencer] timenow={self._getUTCTimeFunction()}   intervalStart={intervalStart}  self.lastSendOfDownloadEprom={self.lastSendOfDownloadEprom}")
+                            #log.debug(f"[_sequencer]                                        intervalLastReceive={intervalLastReceive}  self.lastRecvTimeOfPanelData={self.lastRecvTimeOfPanelData}")
+                            if intervalStart > timedelta(seconds=60):                         # Download hasn't finished in this timeout
+                                _sequencerState = SequencerType.InitialisePanel
+                            elif intervalLastReceive > timedelta(seconds=3):                  # 3 seconds since we last received a byte of data from the panel
+                                _sequencerState = SequencerType.InitialisePanel
+
+                        continue   # just do the while loop
+
+                    elif _sequencerState == SequencerType.EPROMDownloadComplete:  ################################################################ EPROMDownloadComplete ##############################################
+                        
+                        # Check the panel type from EPROM against the panel type from the 3C message to give a basic test of the EPROM download
+                        pmPanelTypeNr = self._lookupEpromSingle("panelTypeCode")    
+                        if pmPanelTypeNr is None or (pmPanelTypeNr is not None and pmPanelTypeNr == 0xFF):
+                            log.error(f"[_sequencer] Lookup of panel type string and model from the EEPROM failed, assuming EEPROM download failed {pmPanelTypeNr=}, going to Standard Mode")
+                            _sequencerState = SequencerType.AimingForStandard
+                        elif self.PanelType is not None and self.PanelType != pmPanelTypeNr:
+                            log.error(f"[_sequencer] Panel Type not set from EEPROM, assuming EEPROM download failed {pmPanelTypeNr=}, going to Standard Mode")
+                            _sequencerState = SequencerType.AimingForStandard
+                        else:
+                            # Process the EPROM data
+                            self._processEPROMSettings()
+                            self.sendPanelUpdate(AlCondition.DOWNLOAD_SUCCESS)   # download completed successfully
+                            if self.gotValidUserCode():
+
+                                if self.PowerLinkBridgeConnected:
+                                    log.debug("[_sequencer] Sending command to Bridge - Stealth OFF")
+                                    command = 2   # Stealth command
+                                    param = 0     # Exit it
+                                    self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to go in to exclusive mode
+                                    command = 1   # Get Status command
+                                    param = 0     # Irrelevant
+                                    self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
+                                    self.PanelMode = AlPanelMode.POWERLINK_BRIDGED
+                                    _sequencerState = SequencerType.DoingPowerlinkBridge
+                                    
+                                else:
+                                    self.PanelMode = AlPanelMode.STANDARD_PLUS
+                                    _sequencerState = SequencerType.EnrollingPowerlink
+                            else:
+                                _sequencerState = SequencerType.AimingForStandard
+
+                        self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
+                        continue   # just do the while loop
+
+                    elif _sequencerState == SequencerType.EnrollingPowerlink:  ################################################################ EnrollingPowerlink ##############################################
+                        
+                        if self.PanelMode == AlPanelMode.POWERLINK:
+                            _sequencerState = SequencerType.DoingPowerlink         # Very unlikely but possible
+                        elif counter == 10:
+                            self.PanelMode = AlPanelMode.STANDARD_PLUS                    # After 10 attempts to enrol, stay in StandardPlus Emulation Mode
+                            _sequencerState = SequencerType.DoingStandardPlus
+                        else:
+                            self._clearReceiveResponseList()
+                            self._emptySendQueue()
+                            self._addMessageToSendList("MSG_EXIT")
+                            log.debug(f"[_sequencer] Try to auto enroll (panel {self.PanelModel})  attempt {counter}")
+                            #self._addMessageToSendList("MSG_EXIT")  # Exit download mode
+                            self._sendMsgENROLL()  #  Try to enroll with the Download Code that worked for Downloading the EPROM
+                            _sequencerState = SequencerType.WaitingForEnrollSuccess
+                        
+                        continue   # just do the while loop
+
+                    elif _sequencerState == SequencerType.WaitingForEnrollSuccess:  ################################################################ WaitingForEnrollSuccess ##############################################
+                        
+                        if (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
+                            self.PanelMode = AlPanelMode.STANDARD_PLUS
+                            _sequencerState = SequencerType.EnrollingPowerlink
+                        elif self.PanelMode == AlPanelMode.POWERLINK:
+                            _sequencerState = SequencerType.DoingPowerlink
+                        elif counter == (MAX_TIME_BETWEEN_POWERLINK_ALIVE if self.receivedPowerlinkAcknowledge else 3):   
+                            # once we receive a powerlink acknowledge then we wait for the I'm alive message (usually every 30 seconds from the panel)
+                            self.PanelMode = AlPanelMode.STANDARD_PLUS
+                            self.setNextDownloadCode() # We're going back to Enrol so set the next self.DownloadCode to try
+                            _sequencerState = SequencerType.EnrollingPowerlink
+
+                        continue   # just do the while loop
+
+                    elif _sequencerState == SequencerType.DoingPowerlinkBridge:  ################################################################ DoingPowerlinkBridge ##############################################
+
+                        if self.PowerLinkBridgeConnected:
+                            if self.PowerLinkBridgeStealth:
+                                log.debug("[_sequencer] Sending commands to Bridge to exit stealth and get status")
+                                command = 2   # Stealth command
+                                param = 0     # Exit it
+                                self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to exit exclusive mode
+                                command = 1   # Get Status command
+                                param = 0     # Irrelevant
+                                self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
+                                self.PowerLinkBridgeStealth = False # To make certain it's disabled
+
+                        if counter % 30 == 0:  # approx every 30 seconds
+                            command = 1   # Get Status command
+                            param = 0     # Irrelevant
+                            self._addMessageToSendList("MSG_PL_BRIDGE", urgent = True, options=[ [1, command], [2, param] ])  # Tell the Bridge to send me the status
+
+                    elif _sequencerState == SequencerType.DoingStandardPlus:  ################################################################ DoingStandardPlus ##############################################
+                        
+                        # Put all the special standard plus mode things here
+                        # Keep alive functionality
+                        self.keep_alive_counter = self.keep_alive_counter + 1
+                        if self.SendQueue.empty() and not self.pmDownloadMode and self.keep_alive_counter >= self.KeepAlivePeriod:  #
+                            self._reset_keep_alive_messages()
+                            self._addMessageToSendList ("MSG_STATUS_SEN")
+
+                        if self.PanelMode == AlPanelMode.POWERLINK:
+                            _sequencerState = SequencerType.DoingPowerlink
+
+                    elif _sequencerState == SequencerType.AimingForStandard:  ############################################################ AimingForStandard ##############################################
+                        
+                        self.PanelMode = AlPanelMode.STANDARD
+                        if self.isPowerMaster(): # PowerMaster so get B0 data
+                            # Powerlink panel so ask the panel for B0 data to get panel details, as these can be asked for and received within download mode we can do it straight away
+                            log.debug("[_sequencer] Adding to wanted list")
+                            #self.B0_Message_Wanted.update([0x20, 0x21, 0x2d, 0x1f, 0x07, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x11, 0x13, 0x14, 0x15, 0x18, 0x1a, 0x19, 0x1b, 0x1d, 0x2f, 0x31, 0x33, 0x1e, 0x24, 0x02, 0x23, 0x3a, 0x4b])
+
+                            # Request User Codes                
+                            #PM_Data = convertByteArray("b0 01 35 07 02 ff 08 ff 02 08 00 43")   # Ask for panel settings with 08 00 Usercodes, 00 as the counter
+                            #CS = self._calculateCRC(PM_Data)   # returns a bytearray with a single byte
+                            #To_Send = bytearray([0x0d]) + PM_Data + CS + bytearray([0x0a])   # Add all the bytearrays together to create the raw PDU
+                            #self._addMessageToSendList(To_Send) # , res = [0xB0])   # Wait for B0
+
+                            # Request Sensor Information and State
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_NAMES"])         # 21
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_TYPES"])         # 2D
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["SENSOR_STATUS"])      # 1F
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["PANEL_STATE"])        # 24
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_LAST_EVENT"])    # 4B
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_OPENCLOSE"])     # 18
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["ZONE_TEMPS"])         # 3D  
+                            self.B0_Message_Wanted.add(pmSendMsgB0_t["SENSOR_ENROL"])       # 1D
+                            s = self._create_B0_Data_Request(taglist = list(self.B0_Message_Wanted))
+                            # Added twice intentionally to try to make sure we get the messages back
+                            self._addMessageToSendList(s)
+                            self._addMessageToSendList(s)
+                        else:    # PowerMax get ZONE_NAMES, ZONE_TYPES etc
+                            self._addMessageToSendList("MSG_ZONENAME")
+                            self._addMessageToSendList("MSG_ZONETYPE")
+                        # only if we meet the criteria do we move on to the next step.  Until then just do it
+                        _gotoStandardModeStopDownload()
+                        _sequencerState = SequencerType.DoingStandard
+                        continue   # just do the while loop
+
+                    elif _sequencerState == SequencerType.DoingStandard:  ################################################################ DoingStandard ##############################################
+                        # Put all the special standard mode things here
+                        # Keep alive functionality
+                        self.keep_alive_counter = self.keep_alive_counter + 1
+                        if self.SendQueue.empty() and not self.pmDownloadMode and self.keep_alive_counter >= self.KeepAlivePeriod:  #
+                            self._reset_keep_alive_messages()
+                            self._addMessageToSendList ("MSG_STATUS_SEN")
+                        
+                        # Do most of this for ALL Panel Types
+                        # Only check these every 180 seconds
+                        if (counter % 180) == 0:
+                            if self.PanelState == AlPanelStatus.UNKNOWN:
+                                log.debug("[_sequencer] ****************************** Getting Panel Status ********************************")
+                                self._addMessageToSendList("MSG_STATUS_SEN")
+                            elif self.PanelState == AlPanelStatus.DOWNLOADING:
+                                log.debug("[_sequencer] ****************************** Exit Download Kicker ********************************")
+                                self._addMessageToSendList("MSG_EXIT", urgent = True)
+                            elif not self.pmGotPanelDetails:
+                                log.debug("[_sequencer] ****************************** Asking For Panel Details ****************************")
+                                _sequencerState = SequencerType.InitialisePanel
+                            else:
+                                # The first time this may create sensors (for PowerMaster, especially those in the range Z33 to Z64 as the A5 message will not have created them)
+                                # Subsequent calls make sure we have all zone names, zone types and the sensor list
+                                self._updateSensorNamesAndTypes()
+
+                    elif _sequencerState == SequencerType.DoingPowerlink:  ################################################################ DoingPowerlink ##############################################
+                        self.PanelMode = AlPanelMode.POWERLINK
+                        # Put all the special powerlink mode things here
+
+                        # Keep alive functionality
+                        self.keep_alive_counter = self.keep_alive_counter + 1    # This is for me sending to the panel
+                        self.powerlink_counter = self.powerlink_counter + 1      # This gets reset to 0 when I receive I'm Alive from the panel
+
+                        if self.powerlink_counter > POWERLINK_IMALIVE_RETRY_DELAY:
+                            # Go back to Std+ and re-enroll
+                            log.debug(f"[_sequencer] ****************************** Not Received I'm Alive From Panel for {POWERLINK_IMALIVE_RETRY_DELAY} Seconds, going to Std+ **************")
+                            self.receivedPowerlinkAcknowledge = False
+                            self.PanelMode = AlPanelMode.STANDARD_PLUS
+                            _sequencerState = SequencerType.EnrollingPowerlink
+                            continue
+
+                        if self.SendQueue.empty() and not self.pmDownloadMode and self.keep_alive_counter >= self.KeepAlivePeriod:  #
+                            # Every self.KeepAlivePeriod seconds, unless watchdog has been reset
+                            self._reset_keep_alive_messages()
+                            # Send I'm Alive to the panel so it knows we're still here
+                            self._addMessageToSendList ("MSG_ALIVE")
+
+                    if self.AutoSyncTime and self.PanelMode in [AlPanelMode.STANDARD_PLUS, AlPanelMode.POWERLINK]:   # AlPanelMode.POWERLINK_BRIDGED cannot do GetTime as it's an 0xAB message
+                        #  We set the time and then check it periodically, and then set it again if different by more than 5 seconds
+                        if counter % 14400 == 0:      # every 4 hours (approx)
+                            # Get the time from the panel (this will compare to local time and set the panel time if different)
+                            self._addMessageToSendList("MSG_GETTIME")
+                        if counter == a_day - 1 or (counter % 10 == 0 and (self.Panel_Integration_Time_Difference is None or (self.Panel_Integration_Time_Difference is not None and abs(self.Panel_Integration_Time_Difference.total_seconds()) > 5))):
+                            #if counter == a_day - 1:
+                            #    log.debug("[_sequencer]    Auto sync time, counter = a_day - 1")
+                            #t = self._getTimeFunction()
+                            #if t.year > 2020:
+                            #    log.debug("[_sequencer]    Local time is {0}".format(t))
+                            #    year = t.year - 2000
+                            #    values = [t.second, t.minute, t.hour, t.day, t.month, year]
+                            #    timePdu = bytearray(values)
+                            #    log.debug("[_sequencer]        Setting Time " + toString(timePdu))
+                            #    self._addMessageToSendList("MSG_BUMP", urgent = True)    # by setting urgent on both this will get sent first
+                            #    self._addMessageToSendList("MSG_SETTIME", options=[ [3, timePdu] ], urgent = True)      # Set the time asap so it syncs as close as possible to my time
+                            #else:
+                            #    log.debug("[_sequencer] Please correct your local time.")
+
+                            # Get the time from the panel (this will compare to local time and set the panel time if different)
+                            self._addMessageToSendList("MSG_GETTIME", urgent = True)
+                            #if t.year > 2020:
+                            #    self._addMessageToSendList("MSG_EXIT", urgent = True)
+
+                    #############################################################################################################################################################
+                    ####### Drop through to here to do generic code for DoingStandard, DoingStandardPlus and DoingPowerlink #####################################################
+                    #############################################################################################################################################################
+
+                    if self.AccessDeniedReceived:
+                        self.AccessDeniedReceived = False
+                        if self.AccessDeniedMessage is not None:
+                            lastCommandData = self.AccessDeniedMessage.command.data
+                            log.debug("[_sequencer]                AccessDenied last command {0}".format(toString(lastCommandData)))
+                            self._reset_watchdog_timeout()
+                            if lastCommandData is not None:
+                                self.pmExpectedResponse = set()  ## really we should look at the response from the last command and only remove the appropriate responses from this list
+                                if lastCommandData[0] != 0xAB and lastCommandData[0] & 0xA0 == 0xA0:  # this will match A0, A1, A2, A3 etc but not 0xAB
+                                    log.debug("[_sequencer] Attempt to send a command message to the panel that has been denied, wrong pin code used")
+                                    # INTERFACE : tell user that wrong pin has been used
+                                    self.sendPanelUpdate(AlCondition.PIN_REJECTED)  # push changes through to the host, the pin has been rejected
+                                elif lastCommandData[0] != 0xAB and lastCommandData[0] != 0x0B:  # Powerlink command and the Stop Command
+                                    log.debug("[_sequencer] Attempt to send a command message to the panel that has been rejected")
+                                    self.sendPanelUpdate(AlCondition.COMMAND_REJECTED)  # push changes through to the host, something has been rejected (other than the pin)
+                    # Make sure that the Access Denied above is processed first
+                    elif (s := await processDownloadStateMessages()) != PanelErrorStates.AllGood:
+                        if s in [PanelErrorStates.Exit]:
+                            log.debug(f"[_sequencer] Received a Exit state, we assume that BUMP was called and rejected by the panel")
+                            if 0x3C in self.pmExpectedResponse:    # We sent BUMP to the panel (probably to set the time) and it has responded with EXIT
+                                self.pmExpectedResponse.remove(0x3C)  #
+                        elif s in [PanelErrorStates.DownloadRetryReceived]:
+                            log.debug(f"[_sequencer] Received a Download Retry and dont know why {str(s)}")
+                        elif s == PanelErrorStates.TimeoutReceived:
+                            log.debug(f"[_sequencer] Received a Panel state Timeout")
+                            # Reset Send state (clear queue and reset flags)
+                            self._clearReceiveResponseList()
+                            #self._emptySendQueue()
+                            self._triggerRestoreStatus() # Clear message buffers and send a Restore (if in Powerlink) or Status (not in Powerlink) to the Panel
+                        else:
+                            log.debug(f"[_sequencer] Received an unknown Panel state and dont know why {str(s)}")
+
+                    # Watchdog functionality
+                    self.watchdog_counter = self.watchdog_counter + 1
+                    # every iteration, decrement all WATCHDOG_MAXIMUM_EVENTS watchdog counters (loop time is 1 second approx, doesn't have to be accurate)
+                    watchdog_list = [x - 1 if x > 0 else 0 for x in watchdog_list]
+
+                    if self.watchdog_counter >= WATCHDOG_TIMEOUT:  #  the loop runs at 1 second
+                        # Check to see if the watchdog timer has expired
+                        # watchdog timeout
+                        log.debug("[_sequencer] ****************************** WatchDog Timer Expired ********************************")
+                        self._reset_watchdog_timeout()
+                        self._reset_keep_alive_messages()
+
+                        # Total Watchdog timeouts
+                        self.WatchdogTimeoutCounter = self.WatchdogTimeoutCounter + 1
+                        # Total Watchdog timeouts in last 24 hours. Total up the entries > 0
+                        self.WatchdogTimeoutPastDay = 1 + sum(1 if x > 0 else 0 for x in watchdog_list)    # in range 1 to 11
+
+                        # move to the next position which is the oldest entry in the list
+                        watchdog_pos = (watchdog_pos + 1) % WATCHDOG_MAXIMUM_EVENTS
+
+                        # When watchdog_list[watchdog_pos] > 0 then the 24 hour period from the timeout WATCHDOG_MAXIMUM_EVENTS times ago hasn't decremented to 0.
+                        #    So it's been less than 1 day for the previous WATCHDOG_MAXIMUM_EVENTS timeouts
+                        if not self.StopTryingDownload and watchdog_list[watchdog_pos] > 0:
+                            log.debug("[_sequencer]               **************** Going to Standard (Plus) Mode and re-establish panel connection ***************")
+                            self.sendPanelUpdate(AlCondition.WATCHDOG_TIMEOUT_GIVINGUP)   # watchdog timer expired, going to standard (plus) mode
+                            _sequencerState = SequencerType.AimingForStandard
+                        else:
+                            log.debug("[_sequencer]               ******************* Trigger Restore Status *******************")
+                            self.sendPanelUpdate(AlCondition.WATCHDOG_TIMEOUT_RETRYING)   # watchdog timer expired, going to try again
+                            # Reset Send state (clear queue and reset flags)
+                            self._clearReceiveResponseList()
+                            self._emptySendQueue()
+                            self._triggerRestoreStatus() # Clear message buffers and send a Restore (if in Powerlink) or Status (not in Powerlink) to the Panel
+
+                        # Overwrite the oldest entry and set it to 1 day in seconds. Keep the stats going in all modes for the statistics
+                        #    Note that the asyncio 1 second sleep does not create an accurate time and this may be slightly more than 24 hours.
+                        watchdog_list[watchdog_pos] = 60 * 60 * 24  # seconds in 1 day
+                        log.debug("[_sequencer]               Watchdog counter array, current=" + str(watchdog_pos))
+                        log.debug("[_sequencer]                       " + str(watchdog_list))
+
+                    #elif self.ImageManager.isImageDataInProgress():
+                    #    # Manage the download of the F4 messages for Camera PIRs
+                    #    # As this does not use acknowledges or checksums then prevent the expected response timer from kicking in
+                    #    self.ImageManager.terminateIfExceededTimeout(40)
+                        
+                    # log.debug("[_sequencer] is {0}".format(self.watchdog_counter))
+                        
+                    if self.isPowerMaster():
+                        if self.PanelMode in [AlPanelMode.STANDARD, AlPanelMode.STANDARD_PLUS, AlPanelMode.POWERLINK_BRIDGED, AlPanelMode.POWERLINK]:
+                            b0_send_wanted_counter = b0_send_wanted_counter + 1
+                            if b0_send_wanted_counter >= 3:
+                                b0_send_wanted_counter = 0
+                                if len(self.B0_Message_Wanted) > 0:
+                                    log.debug(f"[_sequencer] ****************************** Asking For B0_Message_Wanted **************************** {self.B0_Message_Wanted}")
+                                    s = self._create_B0_Data_Request(taglist = list(self.B0_Message_Wanted))
+                                    self._addMessageToSendList(s)
+
+                    if self.PanelMode in [AlPanelMode.STANDARD, AlPanelMode.STANDARD_PLUS, AlPanelMode.POWERLINK, AlPanelMode.POWERLINK_BRIDGED, AlPanelMode.MINIMAL_ONLY]:
+                        # Dump all sensors to the file every 60 seconds (1 minute)
+                        log_sensor_state_counter = log_sensor_state_counter + 1
+                        if log_sensor_state_counter >= 60:
+                            log_sensor_state_counter = 0
+                            self._dumpSensorsToLogFile()
 
 
             except Exception as ex:
@@ -2738,9 +2451,9 @@ class ProtocolBase(AlPanelInterfaceHelper, AlPanelDataStream, MyChecksumCalc):
             #    log.debug("[data receiver] msgType not in self.pmExpectedResponse   Waiting for next PDU :  expected {0}   got {1}".format([hex(no).upper() for no in self.pmExpectedResponse], hex(msgType).upper()))
 
         if data is not None and debugp == DebugLevel.FULL:
-            log.debug(f"[_processReceivedMessage] Received {msg}  response list {[hex(no).upper() for no in self.pmExpectedResponse]}    raw data {toString(data)}")
+            log.debug(f"[_processReceivedMessage] Received {msg}   raw data {toString(data)}          response list {[hex(no).upper() for no in self.pmExpectedResponse]}")
         elif data is not None and debugp == DebugLevel.CMD:
-            log.debug(f"[_processReceivedMessage] Received {msg}  response list {[hex(no).upper() for no in self.pmExpectedResponse]}")
+            log.debug(f"[_processReceivedMessage] Received {msg}   raw data {toString(data[1:4])}          response list {[hex(no).upper() for no in self.pmExpectedResponse]}")
 
         # Handle the message
         if self.packet_callback is not None:
@@ -3191,15 +2904,6 @@ class PacketHandling(ProtocolBase):
         #log.debug("=========================================================================================================================================================")
         #self._dumpSensorsToLogFile(True)
 
-    def _updatelanguage(self):
-        for sensor in range(0, 64):
-            # if the sensor is enrolled
-            if sensor in self.SensorList:
-                self.SensorList[sensor].ztypeName = self.pmZoneType_t[self.pmLang][self.SensorList[sensor].ztype]
-                self.SensorList[sensor].zchime = self.pmZoneChime_t[self.pmLang][self.SensorList[sensor].zchimeref]
-                self.SensorList[sensor].pushChange(AlSensorCondition.RESET)
-
-
     def _updateSensor(self, i, zoneType = None, zoneChime = None, sensor_type = None, motiondelaytime = None, enrolled = None, part = None) -> AlSensorType:
 
         updated = False
@@ -3210,9 +2914,9 @@ class PacketHandling(ProtocolBase):
             self.SensorList[i] = SensorDevice( id = i + 1 )
             created_new_sensor = True
 
-        zoneName = "Unknown"
-        if i < len(self.PanelSettings[PanelSetting.ZoneNames]) and self.PanelSettings[PanelSetting.ZoneNames][i] & 0x1F < len(self.PanelSettings[PanelSetting.ZoneStringNames]):     # 
-            zoneName = self.PanelSettings[PanelSetting.ZoneStringNames][self.PanelSettings[PanelSetting.ZoneNames][i] & 0x1F]
+        zoneName = "unknown"
+        if i < len(self.PanelSettings[PanelSetting.ZoneNames]):     # 
+            zoneName = pmZoneName_t[self.PanelSettings[PanelSetting.ZoneNames][i] & 0x1F]
         
         if zoneName is not None and self.SensorList[i].zname != zoneName:
             updated = True
@@ -3265,12 +2969,12 @@ class PacketHandling(ProtocolBase):
             retval = sensorType
 
         if zoneChime is not None and 0 <= zoneChime <= 2:
-            log.debug(f"Setting Zone Chime {self.pmLang}  {zoneChime}  {self.pmZoneChime_t[self.pmLang][zoneChime]}")
+            #log.debug(f"Setting Zone Chime {zoneChime}  {pmZoneChimeKey[zoneChime]}")
             self.PanelSettings[PanelSetting.ZoneChime][i] = zoneChime
-            if self.SensorList[i].zchime != self.pmZoneChime_t[self.pmLang][zoneChime]:
+            if self.SensorList[i].zchime != pmZoneChimeKey[zoneChime]:
                 updated = True
                 self.SensorList[i].zchimeref = zoneChime
-                self.SensorList[i].zchime = self.pmZoneChime_t[self.pmLang][zoneChime]
+                self.SensorList[i].zchime = pmZoneChimeKey[zoneChime]
 
         if zoneType is not None:
             self.PanelSettings[PanelSetting.ZoneTypes][i] = zoneType
@@ -3282,7 +2986,7 @@ class PacketHandling(ProtocolBase):
         if zoneType is not None and self.SensorList[i].ztype != zoneType:
             updated = True
             self.SensorList[i].ztype = zoneType
-            self.SensorList[i].ztypeName = self.pmZoneType_t[self.pmLang][zoneType]
+            self.SensorList[i].ztypeName = pmZoneTypeKey[zoneType]
 
         if motiondelaytime is not None and motiondelaytime != 0xFFFF:
             if self.SensorList[i].motiondelaytime != motiondelaytime:
@@ -3314,7 +3018,7 @@ class PacketHandling(ProtocolBase):
             self.SensorList[i].pushChange(AlSensorCondition.RESET)
 
 #        log.debug("[_updateSensor]      Z{0:0>2} :  sensor_type={1:0>2}   zoneInfo={2:0>2}   ZTypeName={3}   Chime={4}   SensorType={5}   zoneName={6}".format(
-#               i+1, hex(sensor_type).upper(), hex(zoneInfo).upper(), self.pmZoneType_t["EN"][zoneType], pmZoneChime_t["EN"][zoneChime], sensorType, zoneName))
+#               i+1, hex(sensor_type).upper(), hex(zoneInfo).upper(), pmZoneTypeKey[zoneType], pmZoneChimeKey[zoneChime], sensorType, zoneName))
         return retval
     
     def _processKeypadsAndSirens(self, pmPanelTypeNr) -> str:
@@ -3433,34 +3137,6 @@ class PacketHandling(ProtocolBase):
         return False
 
 
-    def processMultiplexList(self, ref_array, str_array, msg = "") -> list:
-        # first confirm that both arrays are formatted correctly and that the ref_array contains 0 to len(ref_array)
-        def findrefpos(i):
-            for p in range (0,len(ref_array)):   # 0 to len(ref_array)
-                if ref_array[p] == i:
-                    return p
-            return None
-        
-        log.debug(f"[Process Settings] Visonic Multiplex Reference input ref {ref_array}")
-        log.debug(f"[Process Settings] Visonic Multiplex Reference input str {str_array}")
-        str_array_updated = []
-        if len(ref_array) == len(str_array):
-            for i in range (0,len(ref_array)):   # 0 to len(ref_array)
-                if i not in ref_array:
-                    log.debug(f"Lookup of Visonic {msg} Reference Invalid, {i} is not in the array")
-                    return None
-                # redo the string array to miss off the number, dot
-                str_array_updated.append(str_array[i].strip(punctuation).strip())
-        # By here we assume that the arrays are OK and that str_array_updated contains valid strings. 
-        # We need to complete the above before we start populating the output array to make sure it's complete
-        retval = []
-        for i in range (0,len(ref_array)):   # 0 to len(ref_array)
-            ref = findrefpos(i)
-            retval.append(titlecase(str_array_updated[ref]))
-
-        log.debug(f"[Process Settings] Visonic Multiplex Reference output {retval}")
-        return retval
-
     # _processEPROMSettings
     #    Decode the EEPROM and the various settings to determine
     #       The general state of the panel
@@ -3512,34 +3188,6 @@ class PacketHandling(ProtocolBase):
                         else:
                             self.PanelSettings[key] = self._lookupEprom(DecodePanelSettings[PanelSettingCodes[key].PowerMaxEPROM])
             
-            # The zone string names might have spaces padding them to a fixed size string so remove the spaces
-            for i in range(0, len(self.PanelSettings[PanelSetting.ZoneStringNames])):
-                s = self.PanelSettings[PanelSetting.ZoneStringNames][i].strip()
-                if len(s) > 0:
-                    c = s[0]
-                    log.debug(f"[Process Settings]        Processing ZoneString {i} {s.isprintable() and c.isalpha()} {s if s.isprintable() and c.isalpha() else pmZoneName_t[i]} ")
-                    self.PanelSettings[PanelSetting.ZoneStringNames][i] = s if s.isprintable() and c.isalpha() else pmZoneName_t[i]
-                else:
-                    log.debug(f"[Process Settings]        Processing ZoneString {i} (default) {pmZoneName_t[i]}")
-                    self.PanelSettings[PanelSetting.ZoneStringNames][i] = pmZoneName_t[i]
-                    
-
-            # Process the Zone Type from the EPROM and determine whether we can add to pmZoneType_t to create a pmZoneType_t["Panel"]
-            if self.isPowerMaster(): # PowerMaster models
-                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneStrType2S"]), self._lookupEprom(DecodePanelSettings["ZoneStrType1S"]), msg = "Zone Type") ) is not None:
-                    self.pmZoneType_t["Panel"] = l
-                    log.debug(f"[Process Settings]    Successfully updated PowerMaster Zone Type [Panel] from EPROM")
-                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneChimeType2S"]), self._lookupEprom(DecodePanelSettings["ZoneChimeType1S"]), msg = "Chime Type") ) is not None:
-                    self.pmZoneChime_t["Panel"] = l
-                    log.debug(f"[Process Settings]    Successfully updated PowerMaster Chime Type [Panel] from EPROM")
-            else:
-                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneStrType2X"]), self._lookupEprom(DecodePanelSettings["ZoneStrType1X"]), msg = "Zone Type") ) is not None:
-                    self.pmZoneType_t["Panel"] = l
-                    log.debug(f"[Process Settings]    Successfully updated PowerMax Zone Type [Panel] from EPROM")
-                if ( l := self.processMultiplexList(self._lookupEprom(DecodePanelSettings["ZoneChimeType2X"]), self._lookupEprom(DecodePanelSettings["ZoneChimeType1X"]), msg = "Chime Type") ) is not None:
-                    self.pmZoneChime_t["Panel"] = l
-                    log.debug(f"[Process Settings]    Successfully updated PowerMax Chime Type [Panel] from EPROM")
-
             log.debug(f"[Process Settings]    UpdatePanelSettings")
             # ------------------------------------------------------------------------------------------------------------------------------------------------
             # Store partition info & check if partitions are on
@@ -3683,7 +3331,7 @@ class PacketHandling(ProtocolBase):
                 x10Name = (x10Names[i - 1] & 0x1F) if i > 0 else 0x1F     # PGM needs to be set by x10Enabled
 
                 if x10Enabled or x10Name != 0x1F:
-                    x10Location = self.PanelSettings[PanelSetting.ZoneStringNames][x10Name] if i > 0 else "PGM"
+                    x10Location = pmZoneName_t[x10Name] if i > 0 else "PGM"
                     x10Type = "OnOff Switch" if i == 0 else "Dimmer Switch"       # Assume PGM is onoff switch, all other devices are Dimmer Switches
                     if i in self.SwitchList:
                         self.SwitchList[i].type = x10Type
@@ -3704,16 +3352,6 @@ class PacketHandling(ProtocolBase):
             log.warning("[Process Settings] WARNING: Cannot process panel EEPROM settings, download has not completed")
 
         self._dumpSensorsToLogFile(True)
-
-
-    async def _postponeEventTimer(self):
-        while self.PostponeEventCounter > 0:
-            await asyncio.sleep(0.25)  # must be less than 5 seconds for self.suspendAllOperations:
-            self.PostponeEventCounter = self.PostponeEventCounter - 1
-            #log.debug(f"[_postponeEventTimer] timer at {self.PostponeEventCounter}")
-            if self.PostponeEventCounter == 0:
-                log.debug(f"[_postponeEventTimer] timer at {self.PostponeEventCounter}, sending panel update")
-                self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
 
     # This function handles a received message packet and processes it
     def _processReceivedPacket(self, packet):
@@ -3781,7 +3419,9 @@ class PacketHandling(ProtocolBase):
             0x3F        : DecodeMessage( self.pmDownloadMode , self.handle_msgtype3F, False, f"Received 3F Message, we are in {self.PanelMode.name} mode (so I'm ignoring the message), data: {toString(packet)}"),  # Download information
             0xA0        : DecodeMessage(   processNormalData , self.handle_msgtypeA0, False, None ),  # Event log
             0xA3        : DecodeMessage(   processNormalData , self.handle_msgtypeA3,  True, None ),  # Zone Names
+            0xA5        : DecodeMessage(   processNormalData , self.handle_msgtypeA5,  True, None ),  # Zone Information/Update
             0xA6        : DecodeMessage(   processNormalData , self.handle_msgtypeA6,  True, None ),  # Zone Types
+            0xA7        : DecodeMessage(   processNormalData , self.handle_msgtypeA7,  True, None ),  # Panel Information/Update
             0xAB        : DecodeMessage(           processAB , self.handle_msgtypeAB,  True, f"Received AB Message but we are in {self.PanelMode.name} mode (so I'm ignoring the message), data: {toString(packet)}"),  # 
             0xAC        : DecodeMessage(   processNormalData , self.handle_msgtypeAC,  True, None ),  # X10 Names
             0xAD        : DecodeMessage(   processNormalData , self.handle_msgtypeAD,  True, None ),  # No idea what this means, it might ...  send it just before transferring F4 video data ?????
@@ -3801,30 +3441,11 @@ class PacketHandling(ProtocolBase):
                     pushchange = dm.pushchange        # If the function does not return a value then use the dm value
             elif dm.message is not None:
                 log.info(f"[_processReceivedPacket] {dm.message}")
-        elif processNormalData and packet[1] == 0xA5:  # General Event
-            oldSirenActive = self.SirenActive
-            oldPanelState = self.PanelState
-            self.handle_msgtypeA5(packet[2:-2])
-            disarmlist = [AlPanelStatus.DISARMED, AlPanelStatus.ARMING_HOME, AlPanelStatus.ARMING_AWAY]
-            alarmlist = [AlPanelStatus.ENTRY_DELAY, AlPanelStatus.ARMED_HOME, AlPanelStatus.ARMED_AWAY]
-            if self.PanelMode != AlPanelMode.POWERLINK and oldSirenActive != self.SirenActive and self.SirenActive:
-                # The siren has just been activated and is sounding.  We are not in Powerlink Mode.
-                pass
-            elif (oldPanelState in alarmlist and self.PanelState in disarmlist) or (oldPanelState in disarmlist and self.PanelState in alarmlist):
-                # postpone sending the event to HA for up to 0.5 seconds to wait for an A7 message with detailed information about the change
-                #   push through the change to the frontend, just do not create the event as well
-                log.debug("[_processReceivedPacket] Diff on PanelState but not pushing through yet, waiting for A7 data, setting timer to 0.5 seconds")
-                self.PostponeEventCounter = 2  # Kick off the postpone timer ( 2 * 0.25 = 0.5 )
-                asyncio.create_task(self._postponeEventTimer())
-        elif processNormalData and packet[1] == 0xA7:  # General Event
-            if self.PostponeEventCounter > 0:
-                # stop the time sending it as we've received an A7 before the timer triggered
-                self.PostponeEventCounter = 0
-                oldState = [False]   # Force the sending of a AlCondition.PUSH_CHANGE further down
-            self.handle_msgtypeA7(packet[2:-2])
+            if self.sendPanelEventData(): # sent at least 1 event so no need to send PUSH_CHANGE
+                pushchange = False
         elif processNormalData or processAB:
             log.debug("[_processReceivedPacket] Unknown/Unhandled packet type " + toString(packet))
-
+        self.sendPanelEventData()
         if self.PostponeEventCounter == 0 and oldState != statelist():   # make statelist a function so if it's changed it remains consistent
             self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
         elif oldPowerMaster != self.PowerMaster or pushchange:
@@ -4033,10 +3654,7 @@ class PacketHandling(ProtocolBase):
             iEventZone = data[8]
             iLogEvent = data[9]
 
-            zoneStr = ""
-
             if self.isPowerMaster(): # PowerMaster models
-                zoneStr = pmLogPowerMasterUser_t[self.pmLang][iEventZone] or "UNKNOWN"
                 # extract the time as "epoch time" and convert to normal time
                 hs = self._makeInt(data[3:7])
                 # hs = data[3] + (data[4] * 256) + (data[5] * 65536) + (data[6] * 16777216)
@@ -4050,9 +3668,6 @@ class PacketHandling(ProtocolBase):
                 iYear = pmtime.year
             else:
                 iEventZone = int(iEventZone & 0x7F)
-                zoneStr = pmLogPowerMaxUser_t[self.pmLang][iEventZone] or "UNKNOWN"
-
-            eventStr = pmLogEvent_t[self.pmLang][iLogEvent] or "UNKNOWN"
 
             idx = eventNum - 1
 
@@ -4070,8 +3685,8 @@ class PacketHandling(ProtocolBase):
                 self.pmEventLogDictionary[idx].time = "{0:0>2}:{1:0>2}:{2:0>2}".format(iHour, iMin, iSec)
 
             self.pmEventLogDictionary[idx].date = "{0:0>2}/{1:0>2}/{2}".format(iDay, iMonth, iYear)
-            self.pmEventLogDictionary[idx].zone = zoneStr
-            self.pmEventLogDictionary[idx].event = eventStr
+            self.pmEventLogDictionary[idx].zone = iEventZone
+            self.pmEventLogDictionary[idx].event = iLogEvent
             self.pmEventLogDictionary[idx].total = self.eventCount
             self.pmEventLogDictionary[idx].current = idx
             # log.debug("[handle_msgtypeA0] Log Event {0}".format(self.pmEventLogDictionary[idx]))
@@ -4100,23 +3715,28 @@ class PacketHandling(ProtocolBase):
 
     def ProcessPanelStateUpdate(self, sysStatus, sysFlags):
         sysStatus = sysStatus & 0x1F     # Mark-Mills with a PowerMax Complete Part, sometimes this has the 0x20 bit set and I'm not sure why
-        #sarm_detail = "Unknown"
-        #if 0 <= sysStatus < len(pmSysStatus_t[self.pmLang]):
-        #    sarm_detail = pmSysStatus_t[self.pmLang][sysStatus]
-        #self.PanelStatusText = sarm_detail
-
+        
+        oldPS = self.PanelState
         if sysStatus in PanelArmedStatus:
             disarmed = PanelArmedStatus[sysStatus].disarmed
             armed = PanelArmedStatus[sysStatus].armed
             self.PanelState = PanelArmedStatus[sysStatus].state
         else:
-            log.debug("[ProcessPanelStateUpdate]      Unknown state {0}, assuming Disarmed".format(sysStatus))
+            log.debug("[ProcessPanelStateUpdate]      Unknown state {0}, assuming Panel state of Unknown".format(sysStatus))
             disarmed = None
             armed = None
             self.PanelState = AlPanelStatus.UNKNOWN  # UNKNOWN
 
         if self.PanelMode == AlPanelMode.DOWNLOAD:
             self.PanelState = AlPanelStatus.DOWNLOADING  # Downloading
+
+        if self.PanelState == AlPanelStatus.DISARMED and self.PanelState != oldPS:
+            # Panel state is Disarmed and it has just changed
+            if self.isPowerMaster():
+                # Could replace this with a Command B0 data to get Bypass info
+                self._addMessageToSendList("MSG_BYPASSTAT")
+            else:
+                self._addMessageToSendList("MSG_BYPASSTAT")
 
         log.debug(f"[ProcessPanelStateUpdate]  {sysStatus=}    log: {self.PanelState.name}, {disarmed=}  {armed=}")
 
@@ -4152,8 +3772,6 @@ class PacketHandling(ProtocolBase):
 
 
     def ProcessZoneEvent(self, eventZone, eventType):
-        #sEventLog = pmEventType_t[self.pmLang][eventType]
-        #log.debug("[ProcessZoneEvent]      Zone Event      Zone: {0}    Type: {1}, {2}".format(eventZone, eventType, sEventLog))
         log.debug("[ProcessZoneEvent]      Zone Event      Zone: {0}    Type: {1}".format(eventZone, eventType))
         key = eventZone - 1  # get the key from the zone - 1
         
@@ -4161,13 +3779,14 @@ class PacketHandling(ProtocolBase):
             log.debug("[ProcessZoneEvent]          Got a Zone Sensor that I did not know about so creating it")
             self._updateSensor(i = key, enrolled = True)
 
-        if key in self.SensorList:
+        if key in self.SensorList and eventType in ZoneEventAction:
             sf = getattr(self.SensorList[key], ZoneEventAction[eventType].func if eventType in ZoneEventAction else "")
             if sf is not None:
                 log.debug(f"[ProcessZoneEvent]               Processing event {eventType}  calling {ZoneEventAction[eventType].func}({str(ZoneEventAction[eventType].parameter)})")
                 sf(ZoneEventAction[eventType].parameter)
-            else:
-                log.debug(f"[ProcessZoneEvent]               Not processing event {eventType}")
+            self.SensorList[key].setProblem(ZoneEventAction[eventType].problem)
+        else:
+            log.debug(f"[ProcessZoneEvent]               Not processing zone {eventZone}   event {eventType}")
                 
 
     def ProcessX10StateUpdate(self, x10status, total = 16):
@@ -4239,7 +3858,9 @@ class PacketHandling(ProtocolBase):
             # dont know what 6 and 7 are
             dummy1 = data[6]
             dummy2 = data[7]
-            #log.debug(f"[handle_msgtypeA5]      Zone event unknowns are {hexify(dummy1)} {hexify(dummy2)}     sysStatus={hexify(sysStatus)}")
+            log.debug(f"[handle_msgtypeA5]      Zone event   sysStatus={hexify(sysStatus)}    sysFlags={hexify(sysFlags)}    eventZone={hexify(eventZone)}    eventType={hexify(eventType)}    unknowns are {hexify(dummy1)} {hexify(dummy2)}")
+
+            #last10seconds = sysFlags & 0x10
 
             self.ProcessPanelStateUpdate(sysStatus=sysStatus, sysFlags=sysFlags)
             if sysFlags & 0x20 != 0:  # Zone Event
@@ -4289,6 +3910,7 @@ class PacketHandling(ProtocolBase):
             valb = self._makeInt(data[6:10])
             if vala != 0 or valb != 0:
                 log.debug("[handle_msgtypeA5]      Unknown A5 Message: " + toString(data))
+                # [handle_msgtypeA5]      Unknown A5 Message: 10 05 00 00 00 00 00 00 43 21 43        # 4321 is the 1st account number
 
         self.sendPanelUpdate(AlCondition.PUSH_CHANGE)  # push through a panel update to the HA Frontend
 
@@ -4303,7 +3925,7 @@ class PacketHandling(ProtocolBase):
         for i in range(0, 8):
             # Save the Zone Type
             self.PanelSettings[PanelSetting.ZoneTypes][offset+i] = ((int(data[2+i])) - 0x1E) & 0x0F
-            log.debug("                        Zone type for sensor {0} is {1} : {2}".format( offset+i+1, (int(data[2+i])) - 0x1E, self.pmZoneType_t["EN"][self.PanelSettings[PanelSetting.ZoneTypes][offset+i]] ))
+            log.debug("                        Zone type for sensor {0} is {1} : {2}".format( offset+i+1, (int(data[2+i])) - 0x1E, pmZoneTypeKey[self.PanelSettings[PanelSetting.ZoneTypes][offset+i]] ))
             if self.PanelMode != AlPanelMode.POWERLINK and (offset+i) in self.SensorList:
                 self._updateSensor(offset+i, zoneType = self.PanelSettings[PanelSetting.ZoneTypes][offset+i])
 
@@ -4315,41 +3937,28 @@ class PacketHandling(ProtocolBase):
     def handle_msgtypeA7(self, data):
         """ MsgType=A7 - Panel Status Change """
         #log.debug("[handle_msgtypeA7] Panel Status Change " + toString(data))
-        #
-        #   In a log file I reveiced from pocket,    there was this A7 message 0d a7 ff fc 00 60 00 ff 00 0c 00 00 43 45 0a
-        #   In a log file I reveiced from UffeNisse, there was this A7 message 0d a7 ff 64 00 60 00 ff 00 0c 00 00 43 45 0a     msgCnt is 0xFF and temp is 0x64 ????
-        #
         msgCnt = int(data[0])
-
-        # don't know what this is (It is 0x00 in test messages so could be the higher 8 bits for msgCnt)
-        dummy = int(data[1])
 
         # If message count is FF then it looks like the first message is valid so decode it (this is experimental)
         if msgCnt == 0xFF:
             msgCnt = 1
 
         if msgCnt > 4:
-            log.warning("[handle_msgtypeA7]      A7 message contains too many messages to process : {0}   data={1}".format(msgCnt, toString(data)))
-        if msgCnt <= 0:
-            log.warning("[handle_msgtypeA7]      A7 message contains no messages to process : {0}   data={1}".format(msgCnt, toString(data)))
-        else:  ## message count 1 to 4
-            log.debug("[handle_msgtypeA7]      A7 message contains {0} messages".format(msgCnt))
+            log.warning(f"[handle_msgtypeA7]      A7 message contains too many messages to process : {msgCnt}   data={toString(data)}")
+        else:  ## message count 0 to 4
+            # don't know what this is (It is 0x00 in test messages so could be the higher 8 bits for msgCnt)
+            dummy = int(data[1])
+            log.debug(f"[handle_msgtypeA7]      A7 message contains {msgCnt} messages,   unknown byte is {hex(dummy)}".format())
 
-            PanelTamper = False
-            zoneCnt = 0  # this means it wont work in the case we're in standard mode and the panel type is not set
-            if self.PanelType is not None:
-                zoneCnt = pmPanelConfig_t["CFG_WIRELESS"][self.PanelType] + pmPanelConfig_t["CFG_WIRED"][self.PanelType]
+            #zoneCnt = 0  # this means it wont work in the case we're in standard mode and the panel type is not set
+            #if self.PanelType is not None:
+            #    zoneCnt = pmPanelConfig_t["CFG_WIRELESS"][self.PanelType] + pmPanelConfig_t["CFG_WIRED"][self.PanelType]
 
             # If there are multiple messages in the same A7 message then alarmStatus represents the last "not None" valid message i.e. in pmPanelAlarmType_t
-            oldTroubleStatus = self.PanelTroubleStatus
-            oldAlarmStatus = self.PanelAlarmStatus
+            #oldTroubleStatus = self.PanelTroubleStatus
+            #oldAlarmStatus = self.PanelAlarmStatus
 
-            dictType = []
-            dictMode = []
-            dictEvent = []
-            dictName = []
-
-            log.debug("[handle_msgtypeA7]         self.SirenTriggerList = {0}".format(self.SirenTriggerList))
+            #log.debug("[handle_msgtypeA7]         self.SirenTriggerList = {0}".format(self.SirenTriggerList))
 
             # 03 00 01 03 08 0e 01 13
             # 03 00 2f 55 2f 1b 00 1c
@@ -4363,112 +3972,60 @@ class PacketHandling(ProtocolBase):
                     # Force an update in the Zone Names and Types
                     self._updateSensorNamesAndTypes(True)
                 else:
-                    zoneStr = "Unknown"
-                    if self.PowerMaster is not None:
-                        if self.PowerMaster:
-                            zoneStr = pmLogPowerMasterUser_t[self.pmLang][eventZone] or "Unknown"
-                        else:
-                            eventZone = int(eventZone & 0x7F)
-                            zoneStr = pmLogPowerMaxUser_t[self.pmLang][eventZone] or "Unknown"
-                    else:
-                        log.debug("[handle_msgtypeA7]         Got an A7 message and the self.PowerMaster variable is not set")
-
-                    eventStr = pmLogEvent_t[self.pmLang][eventType] or "Unknown"
-
-                    dictType.append(eventType)
-                    dictMode.append(eventStr)
-                    dictEvent.append(eventZone)
-                    dictName.append(zoneStr)
+                    self.addPanelEventData(AlPanelEventData(eventZone, eventType))
 
                     #log.debug(f"[handle_msgtypeA7] {hexify(eventType)=} {eventStr=}       {hexify(eventZone)=} {zoneStr=}")
-
                     # set the sensor data
                     #if eventZone >= 1 and eventZone <= zoneCnt:
                     #    if eventZone-1 in self.SensorList:
                     #        
                     # ---------------------------------------------------------------------------------------
 
-                    # Siren state
-                    siren = False
-                    if eventType == 0:
-                        self.PanelAlarmStatus = AlAlarmType.NONE
+                    # Update tamper status
+                    self.PanelTamper = eventType in pmPanelTamperSet
+
+                    # Update trouble status
+                    if eventType in pmPanelTroubleType_t:     # Trouble state
+                        self.PanelTroubleStatus = pmPanelTroubleType_t[eventType]
+                    else:
                         self.PanelTroubleStatus = AlTroubleType.NONE
-                    elif eventType in pmPanelAlarmType_t:
+                        
+                    # Update siren status
+                    siren = False
+                 
+                    if eventType in pmPanelAlarmType_t:
                         self.PanelAlarmStatus = pmPanelAlarmType_t[eventType]
                         #alarmStatus = self.PanelAlarmStatus
-                        log.debug("[handle_msgtypeA7]         Checking if {0} is in the siren trigger list {1}".format(str(self.PanelAlarmStatus).lower(), self.SirenTriggerList))
+                        log.debug(f"[handle_msgtypeA7]         Updating panel alarm status {self.PanelAlarmStatus}     Checking if it's in the siren trigger list {self.SirenTriggerList}")
                         if str(self.PanelAlarmStatus).lower() in self.SirenTriggerList:
                             # If any of the A7 messages are in the SirenTriggerList then assume the Siren is triggered
-                            log.debug("[handle_msgtypeA7]             And it is, setting siren to True")
                             siren = True
-                    elif eventType in pmPanelTroubleType_t:     # Trouble state
-                        self.PanelTroubleStatus = pmPanelTroubleType_t[eventType]
-
-                    log.debug("[handle_msgtypeA7]         System message " + eventStr + " / " + zoneStr + "  alarmStatus " + str(self.PanelAlarmStatus) + "   troubleStatus " + str(self.PanelTroubleStatus))
-
-                    #---------------------------------------------------------------------------------------
-                    # Update tamper and siren status
-                    # The reasons to indicate a tamper
-                    tamper = eventType == EVENT_TYPE_SENSOR_TAMPER or \
-                             eventType == EVENT_TYPE_PANEL_TAMPER or \
-                             eventType == EVENT_TYPE_TAMPER_ALARM_A or \
-                             eventType == EVENT_TYPE_TAMPER_ALARM_B
-
-                    # The reasons to cancel the siren
-                    cancel = eventType == EVENT_TYPE_DISARM or \
-                             eventType == EVENT_TYPE_ALARM_CANCEL or \
-                             eventType == EVENT_TYPE_FIRE_RESTORE or \
-                             eventType == EVENT_TYPE_FLOOD_ALERT_RESTORE or \
-                             eventType == EVENT_TYPE_GAS_TROUBLE_RESTORE
-
-                    # The reasons to ignore (not cancel) an alarm
-                    ignore = eventType == EVENT_TYPE_DELAY_RESTORE or \
-                             eventType == EVENT_TYPE_CONFIRM_ALARM or \
-                             eventType == EVENT_TYPE_INTERIOR_RESTORE or \
-                             eventType == EVENT_TYPE_PERIMETER_RESTORE
-
-                    if tamper:
-                        PanelTamper = True
-
+                    else:
+                        self.PanelAlarmStatus = AlAlarmType.NONE
+                    
                     # no clauses as if siren gets true again then keep updating self.SirenActive with the time
                     if siren:
                         self.SirenActive = True
-                        log.debug("[handle_msgtypeA7] ******************** Alarm Active *******************")
+                        log.debug("[handle_msgtypeA7]            ******************** Alarm Active *******************")
 
                     # cancel alarm and the alarm has been triggered
-                    if cancel and self.SirenActive:  # Cancel Alarm
+                    if eventType in pmPanelCancelSet and self.SirenActive:  # Cancel Alarm
                         self.SirenActive = False
-                        log.debug("[handle_msgtypeA7] ******************** Alarm Cancelled ****************")
+                        log.debug("[handle_msgtypeA7]            ******************** Alarm Cancelled ****************")
 
                     # Siren has been active but it is no longer active (probably timed out and has then been disarmed)
-                    if not ignore and not siren and self.SirenActive:  # Alarm Timed Out ????
+                    if eventType not in pmPanelIgnoreSet and not siren and self.SirenActive:  # Alarm Timed Out ????
                         self.SirenActive = False
-                        log.debug("[handle_msgtypeA7] ******************** Alarm Not Sounding ****************")
+                        log.debug("[handle_msgtypeA7]            ******************** Event in Ignore Set, Cancelling Alarm Indication ****************")
 
-                    # INTERFACE Indicate whether siren active
-                    log.debug("[handle_msgtypeA7]           self.SirenActive={0}   siren={1}   eventType={2}   tamper={3}".format(self.SirenActive, siren, hex(eventType), tamper) )
+                    log.debug(f"[handle_msgtypeA7]         System message eventType={eventType}   self.PanelTamper={self.PanelTamper}   self.PanelAlarmStatus={self.PanelAlarmStatus}" +
+                              f"    self.PanelTroubleStatus={self.PanelTroubleStatus}    self.SirenActive={self.SirenActive}   siren={siren}")
 
                     #---------------------------------------------------------------------------------------
                     if eventType == EVENT_TYPE_FORCE_ARM or (self.pmForceArmSetInPanel and eventType == EVENT_TYPE_DISARM): # Force Arm OR (ForceArm has been set and Disarm)
                         self.pmForceArmSetInPanel = True                                 # When the panel uses ForceArm then sensors may be automatically armed and bypassed by the panel
-                        log.debug("[handle_msgtypeA7]          Panel has been Armed using Force Arm, sensors may have been bypassed by the panel, asking panel for an update")
+                        log.debug("[handle_msgtypeA7]              Panel has been Armed using Force Arm, sensors may have been bypassed by the panel, asking panel for an update")
                         self._addMessageToSendList("MSG_BYPASSTAT")
-
-            #if oldAlarmStatus != self.PanelAlarmStatus or oldTroubleStatus != self.PanelTroubleStatus:
-            #    # send update
-            #    pass
-
-            if len(dictType) > 0:
-                log.debug(f"[handle_msgtypeA7] setLastPanelEventData, event length = {len(dictType)}")
-                # count=0, type=[], event=[], mode=[], name=[]
-                self.setLastPanelEventData(count=len(dictType), type=dictType, event=dictEvent, zonemode=dictMode, name=dictName)
-
-            self.PanelTamper = PanelTamper
-            # reset=False
-            #if PanelTamper:
-            #    log.debug("[handle_msgtypeA7] ******************** Tamper Triggered *******************")
-            #    self.sendPanelUpdate(AlCondition.PANEL_TAMPER_ALARM)  # push changes through to the host to get it to update, tamper is active!
-
 
     # pmHandlePowerlink (0xAB)
     def handle_msgtypeAB(self, data) -> bool:  # PowerLink Message
@@ -4645,10 +4202,11 @@ class PacketHandling(ProtocolBase):
             log.debug("[handle_msgtypeB0]       Received message, 03 24 information  date={0}".format(messagedate))
             log.debug(f"[handle_msgtypeB0]                    data (hex) 14={hex(unknown1)}  15={hex(unknown2)}  PartitionCount={partitionCount}  Status={hex(sysStatus)}  System={hex(sysFlags)}  19={hex(unknown3)}  20={hex(unknown4)}")
  
-            self.ProcessPanelStateUpdate(sysStatus=sysStatus, sysFlags=sysFlags)
-            
-            #if sysFlags & 0x20 != 0:  # Zone Event
-            #    self.ProcessZoneEvent(eventZone=eventZone, eventType=eventType)
+            self.ProcessPanelStateUpdate(sysStatus=sysStatus, sysFlags=sysFlags & 0x7F)  # Mask off the top bit "Alarm Event" as always seems to be set in the B0 messages
+
+            if sysFlags & 0x20 != 0:  # Zone Event
+                log.debug("[handle_msgtypeB0]    It also claims to have a zone event")
+                #self.ProcessZoneEvent(eventZone=eventZone, eventType=eventType)
 
         elif msgType == 0x03 and subType == pmSendMsgB0_t["ZONE_OPENCLOSE"] and ch.datasize == 1 and ch.index == 3:
             # I'm 100% sure this is correct

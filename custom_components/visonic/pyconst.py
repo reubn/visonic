@@ -143,7 +143,7 @@ a = AlAlarmType()
 # the set of configuration parameters in to this client class
 class AlConfiguration(AlEnum):
     DownloadCode = AlIntEnum(0)           # 4 digit string or ""
-    PluginLanguage = AlIntEnum(3)         # String "EN", "FR", "NL", "Panel"
+#    PluginLanguage = AlIntEnum(3)         # String "EN", "FR", "NL", "Panel"
     SirenTriggerList = AlIntEnum(5)       # A list of strings
     ForceStandard = AlIntEnum(6)          # Boolean
     DisableAllCommands = AlIntEnum(11)    # Boolean
@@ -173,9 +173,14 @@ class AlPanelStatus(AlEnum):
     ENTRY_DELAY = AlIntEnum(4)
     ARMED_HOME = AlIntEnum(5)
     ARMED_AWAY = AlIntEnum(6)
-    SPECIAL = AlIntEnum(7)
-    DOWNLOADING = AlIntEnum(8)
-    INSTALLER = AlIntEnum(9)
+    ARMED_HOME_BYPASS = AlIntEnum(7)
+    ARMED_AWAY_BYPASS = AlIntEnum(8)
+    ARMED_HOME_INSTANT = AlIntEnum(9)
+    ARMED_AWAY_INSTANT = AlIntEnum(10)
+    ENTRY_DELAY_INSTANT = AlIntEnum(11)
+    USER_TEST = AlIntEnum(12)
+    DOWNLOADING = AlIntEnum(13)
+    INSTALLER = AlIntEnum(14)
 a = AlPanelStatus()
 
 # The set of commands that can be used to arm and disarm the panel
@@ -285,6 +290,16 @@ class AlSensorType(AlEnum):
     TEMPERATURE = AlIntEnum(9)
     SOUND = AlIntEnum(10)
 a = AlSensorType()
+
+class AlPanelEventData:
+    def __init__(self, name_i : int = 0, action_i : int = 0):
+        self.name_i = name_i
+        self.action_i = action_i
+        self.time = ""
+
+    def __str__(self):
+        return f"  {self.time}   {self.name_i} {self.action_i}"
+
 
 class AlLogPanelEvent:
     def __init__(self):
@@ -431,9 +446,8 @@ class PanelConfig(TypedDict):
     AlConfiguration.ForceStandard:        bool
     AlConfiguration.DisableAllCommands:   bool
     AlConfiguration.DownloadCode:         str
-    AlConfiguration.PluginLanguage:       str
+#    AlConfiguration.PluginLanguage:       str
     AlConfiguration.SirenTriggerList:     list[str]
-
 
 class AlTransport(ABC):
 
@@ -512,10 +526,10 @@ class AlPanelInterface(ABC):
         """ Get the panel bypass state """
         return False
 
-    @abstractmethod
-    def getPanelLastEvent(self) -> (str, str, str):
-        """ Return the panels last event string """
-        return ("", "")
+    #@abstractmethod
+    #def getPanelLastEvent(self) -> (str, str, str):
+    #    """ Return the panels last event string """
+    #    return ("", "")
 
     # @abstractmethod
     # def getPanelTroubleStatus(self) -> str:
