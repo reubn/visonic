@@ -146,7 +146,7 @@ class VisonicBinarySensor(BinarySensorEntity):
             self._is_available = self._visonic_device.isEnrolled()
             #_LOGGER.debug(f"   In binary sensor VisonicSensor onchange self._is_available = {self._is_available}    self._current_value = {self._current_value}")
             # Ask HA to schedule an update
-            if self.entity_id is not None:
+            if self.hass is not None and self.entity_id is not None:
                 self.schedule_update_ha_state()
         else:
             _LOGGER.debug("changeHandler: binary sensor on change called but sensor is not defined")
